@@ -1,0 +1,119 @@
+.result-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+  position: sticky;
+  top: 2rem;
+}
+
+.result-card.center {
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  text-align: center;
+  gap: 1rem;
+}
+
+.placeholder-icon,
+.error-icon { font-size: 2rem; }
+
+.muted { color: var(--muted); font-size: 0.88rem; }
+.error-text { color: var(--danger); font-size: 0.88rem; }
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.risk-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 100px;
+  font-size: 0.82rem;
+  align-self: flex-start;
+}
+
+.risk-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.gauge-section { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.gauge-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.gauge-pct {
+  font-family: var(--font-head);
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.gauge-track {
+  height: 7px;
+  background: var(--border);
+  border-radius: 100px;
+  overflow: hidden;
+}
+
+.gauge-fill {
+  height: 100%;
+  border-radius: 100px;
+  transition: width 0.6s ease;
+}
+
+.gauge-meta { font-size: 0.73rem; color: var(--muted); }
+
+.reasons-section { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.reasons-title {
+  font-family: var(--font-head);
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+}
+
+.reason-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.55rem 0.7rem;
+  background: var(--bg);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.reason-left { display: flex; align-items: center; gap: 0.5rem; }
+.reason-rank { font-size: 0.68rem; color: var(--muted); font-weight: 600; }
+.reason-feature { font-size: 0.8rem; font-weight: 500; }
+
+.reason-right { display: flex; flex-direction: column; align-items: flex-end; gap: 0.1rem; }
+.reason-dir { font-size: 0.75rem; font-weight: 600; }
+.reason-effect { font-size: 0.68rem; color: var(--muted); }
+
+.result-footer {
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-align: center;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+}

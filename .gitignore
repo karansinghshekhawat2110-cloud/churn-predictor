@@ -1,0 +1,7 @@
+venv/
+__pycache__/
+*.pkl
+*.npy
+.env
+node_modules/
+frontend/dist/
