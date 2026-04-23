@@ -41,6 +41,7 @@ app.add_middleware(
         "http://localhost:5173",
         "http://localhost:3000",
         "https://*.vercel.app",
+        "https://churn-predictor-phi.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
