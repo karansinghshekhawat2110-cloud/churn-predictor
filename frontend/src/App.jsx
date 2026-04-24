@@ -37,20 +37,29 @@ export default function App() {
   return (
     <div className="app">
       <header className="header">
-        <div className="header-icon">⚡</div>
-        <div>
-          <h1>Churn Predictor</h1>
-          <p>IBM Telco · Random Forest · SHAP Explanations</p>
+        <div className="header-brand">
+          <div className="header-icon">✨</div>
+          <div>
+            <h1>Churn Predictor App</h1>
+            <p>Powered by XGBoost & SHAP Magic 🪄</p>
+          </div>
+        </div>
+        <div className="header-stats">
+          <div className="stat-badge">🎯 AI-Powered</div>
+          <div className="stat-badge">⚡ Real-time Insights</div>
         </div>
       </header>
 
       <main className="main">
+        <div className="photo-hero">
+          <div className="photo-hero-bg"></div>
+          <div className="photo-hero-overlay"></div>
+          <h2>Analyze Customer Happiness & Predict Retention! 🚀</h2>
+        </div>
+
         <CustomerForm onPredict={handlePredict} loading={loading} />
         <ResultCard result={result} error={error} loading={loading} />
       </main>
     </div>
   )
 }
-
-
-
