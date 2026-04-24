@@ -11,6 +11,16 @@
   box-shadow: 0 1px 3px rgba(0,0,0,0.08); /* RetainIQ shadow */
 }
 
+/* 2. Keyframe entrance hook */
+.result-card-anim {
+  animation: slideUp 200ms ease-out forwards;
+}
+
+@keyframes slideUp {
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
 .result-card.center {
   align-items: center;
   justify-content: center;
@@ -45,15 +55,9 @@
 }
 
 .result-content {
-  animation: fadeIn 0.4s ease;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* Center the Animated SVG Ring */
@@ -109,9 +113,11 @@
   overflow: hidden;
 }
 
+/* 3. Bar transition hook */
 .reason-bar-fill {
   height: 100%;
   border-radius: 2px;
+  transition: width 0.6s ease;
 }
 
 .reason-effect {
@@ -126,6 +132,11 @@
 /* Action Cards */
 .action-section {
   animation: fadeIn 0.4s ease 0.2s backwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .action-cards {

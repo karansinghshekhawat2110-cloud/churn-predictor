@@ -69,6 +69,17 @@ const RiskRing = ({ pct, color }) => {
 
 export default function ResultCard({ result, error, loading }) {
 
+  const [barsMounted, setBarsMounted] = useState(false)
+
+  // 3. Trigger SHAP bars after short mount delay
+  useEffect(() => {
+    setBarsMounted(false)
+    if (result) {
+      const t = setTimeout(() => setBarsMounted(true), 50)
+      return () => clearTimeout(t)
+    }
+  }, [result])
+
   if (loading) return (
     <div className="result-card center">
       <div className="skeleton-bars">
@@ -85,12 +96,17 @@ export default function ResultCard({ result, error, loading }) {
     </div>
   )
 
+  // 4. SVG Illustration for Empty State
   if (!result) return (
     <div className="result-card center">
-      <p className="empty-label">
-        Waiting for pipeline.<br />
-        Complete the wizard and analyze.
-      </p>
+      <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.4 }}>
+        <rect x="4" y="14" width="4" height="6" rx="1"></rect>
+        <rect x="10" y="10" width="4" height="10" rx="1"></rect>
+        <rect x="16" y="6" width="4" height="14" rx="1"></rect>
+        <circle cx="16" cy="3" r="4" fill="var(--surface)"></circle>
+        <path d="M16 1.5a1.2 1.2 0 0 1 .8 2.1c-.4.4-.8.8-.8 1.4v.2" />
+        <circle cx="16" cy="6.8" r="0.4" fill="var(--muted)"></circle>
+      </svg>
     </div>
   )
 
@@ -113,8 +129,9 @@ export default function ResultCard({ result, error, loading }) {
     .filter(r => r.direction === 'increases risk' && actionMap[r.feature])
     .slice(0, 2);
 
+  // Use JSON stringified result as a key to force re-render entrance animation
   return (
-    <div className="result-card">
+    <div className="result-card result-card-anim" key={JSON.stringify(result)}>
       <div className="result-content">
         
         <RiskRing pct={pct} color={ringColor} />
@@ -122,8 +139,10 @@ export default function ResultCard({ result, error, loading }) {
         <div>
           <h3 className="reasons-title">Top Risk Drivers (SHAP)</h3>
           {top_reasons.map((r, i) => {
-            const barWidth = `${(Math.abs(r.effect) / maxEffect) * 100}%`
+            const barWidthTarget = `${(Math.abs(r.effect) / maxEffect) * 100}%`
+            const barWidth = barsMounted ? barWidthTarget : '0%'
             const isRiskInc = r.direction === 'increases risk'
+            
             return (
               <div key={i} className="reason-row">
                 <span className="reason-rank">#{i + 1}</span>
