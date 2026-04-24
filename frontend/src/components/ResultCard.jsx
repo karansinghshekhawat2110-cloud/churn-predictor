@@ -1,6 +1,37 @@
 import { useState, useEffect } from 'react'
 import './ResultCard.css'
 
+const actionMap = {
+  'Contract': {
+    title: 'Offer a long-term contract',
+    action: 'Customers on month-to-month plans churn 3x more. Offer a discount for switching to annual.'
+  },
+  'tenure': {
+    title: 'Loyalty reward program',
+    action: 'Low-tenure customers are high risk. A 1-month free credit at month 3 reduces churn by ~18%.'
+  },
+  'OnlineSecurity': {
+    title: 'Bundle online security',
+    action: 'Customers without security add-ons churn more. Offer a free 30-day trial.'
+  },
+  'TechSupport': {
+    title: 'Proactive support outreach',
+    action: 'No tech support is a strong churn signal. Trigger a support check-in call.'
+  },
+  'InternetService': {
+    title: 'Address fiber service quality',
+    action: 'Fiber optic users churn more despite paying more — often a satisfaction issue. Send a survey.'
+  },
+  'MonthlyCharges': {
+    title: 'Pricing Optimization',
+    action: 'High monthly charges flag cost sensitivity. Check if a tailored down-sell package rescues the account.'
+  },
+  'PaymentMethod': {
+    title: 'Incentivize Auto-Pay',
+    action: 'Manual check users churn 2x more frequently. Offer a $5/mo discount to switch to credit-card auto-pay.'
+  }
+}
+
 // Animated Risk Score Ring Component
 const RiskRing = ({ pct, color }) => {
   const r = 54, circ = 2 * Math.PI * r
@@ -77,6 +108,11 @@ export default function ResultCard({ result, error, loading }) {
   // Calculate max absolute effect for bar widths
   const maxEffect = Math.max(...top_reasons.map(r => Math.abs(r.effect))) || 1
 
+  // Extract Top 2 actionable drivers
+  const actionsToTake = top_reasons
+    .filter(r => r.direction === 'increases risk' && actionMap[r.feature])
+    .slice(0, 2);
+
   return (
     <div className="result-card">
       <div className="result-content">
@@ -107,6 +143,28 @@ export default function ResultCard({ result, error, loading }) {
             )
           })}
         </div>
+
+        {/* Retention Action Recommendations */}
+        {churn_prediction && actionsToTake.length > 0 && (
+          <div className="action-section">
+            <h3 className="reasons-title" style={{ marginTop: '0.5rem' }}>Suggested Actions</h3>
+            <div className="action-cards">
+              {actionsToTake.map((r, i) => (
+                <div key={i} className="action-card">
+                  <span className="action-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                       <path d="M12 2v20 M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                    </svg>
+                  </span>
+                  <div className="action-content">
+                    <span className="action-title">{actionMap[r.feature].title}</span>
+                    <span className="action-desc">{actionMap[r.feature].action}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
       </div>
       <div className="result-footer">
