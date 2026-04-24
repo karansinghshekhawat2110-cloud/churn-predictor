@@ -182,3 +182,28 @@
   .header-tabs { display: flex; text-align: center; }
   .tab-btn { flex: 1; }
 }
+
+.cold-start-banner {
+  background: rgba(210, 153, 34, 0.1);
+  border-bottom: 1px solid rgba(210, 153, 34, 0.3);
+  color: #d29922;
+  font-size: 12px;
+  text-align: center;
+  padding: 0.5rem 1rem;
+}
+
+.header-right {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.stat-chip {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  background: var(--surface-2, #1a2130);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.2rem 0.5rem;
+}

@@ -189,3 +189,30 @@
   padding-top: 1rem;
   border-top: 1px solid var(--surface-2);
 }
+
+.result-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.action-btn {
+  flex: 1;
+  padding: 0.4rem 0.75rem;
+  font-size: 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.action-btn:hover {
+  border-color: var(--border-2);
+  color: var(--text);
+}
+
+@media print {
+  .form-card, .header, .cold-start-banner, .result-actions { display: none !important; }
+  .result-card { border: none; padding: 0; }
+}

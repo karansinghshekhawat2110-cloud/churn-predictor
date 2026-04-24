@@ -304,3 +304,38 @@
   .form-grid { grid-template-columns: 1fr; }
   .pill-container { flex-direction: column; }
 }
+
+.btn-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  width: 100%;
+}
+
+.predict-btn {
+  flex: 3;
+  margin-top: 0;
+}
+
+.reset-btn {
+  flex: 1;
+  padding: 0.7rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.reset-btn:hover:not(:disabled) {
+  border-color: var(--border-2, #2d3d52);
+  color: var(--text);
+}
+
+.reset-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

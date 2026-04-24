@@ -76,12 +76,28 @@ export default function CustomerForm({ onPredict, loading }) {
 
   const liveRisk = useMemo(() => getLiveRisk(form), [form])
 
-  const handleSubmit = () => onPredict({
-    ...form,
-    SeniorCitizen: parseInt(form.SeniorCitizen),
-    tenure: parseInt(form.tenure),
-    MonthlyCharges: parseFloat(form.MonthlyCharges)
-  })
+  const handleReset = () => setForm(defaultForm)
+
+  const handleSubmit = () => {
+    const charges = parseFloat(form.MonthlyCharges)
+    const tenure = parseInt(form.tenure)
+
+    if (isNaN(charges) || charges < 0) {
+      alert('Monthly Charges must be 0 or greater.')
+      return
+    }
+    if (isNaN(tenure) || tenure < 0 || tenure > 72) {
+      alert('Tenure must be between 0 and 72 months.')
+      return
+    }
+
+    onPredict({
+      ...form,
+      SeniorCitizen: parseInt(form.SeniorCitizen),
+      tenure: tenure,
+      MonthlyCharges: charges
+    })
+  }
 
   // Calculate progress bar line width
   const progressWidth = step === 1 ? 0 : step === 2 ? 50 : 100
@@ -206,19 +222,24 @@ export default function CustomerForm({ onPredict, loading }) {
             Next Step
           </button>
         ) : (
-          <button 
-            className="btn-primary" 
-            onClick={handleSubmit} 
-            disabled={loading}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="animate-spin" size={16} />
-                <span>Analyzing...</span>
-              </>
-            ) : 'Predict Churn Pipeline'}
-          </button>
+          <div className="btn-row">
+            <button className="reset-btn" onClick={handleReset} disabled={loading}>
+              Reset
+            </button>
+            <button 
+              className="btn-primary predict-btn" 
+              onClick={handleSubmit} 
+              disabled={loading}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="animate-spin" size={16} />
+                  <span>Analyzing...</span>
+                </>
+              ) : 'Predict Churn Pipeline'}
+            </button>
+          </div>
         )}
       </div>
     </div>

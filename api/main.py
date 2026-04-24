@@ -20,7 +20,7 @@ import pandas as pd
 
 from fastapi import FastAPI, HTTPException, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from typing import List
 from collections import defaultdict
 
@@ -51,12 +51,7 @@ app = FastAPI(
 # CORS: allow React dev server (Vite=5173, CRA=3000) and Vercel deployments
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "https://*.vercel.app",
-        "https://churn-predictor-phi.vercel.app",
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -118,21 +113,24 @@ class CustomerData(BaseModel):
     MonthlyCharges: float   = Field(..., ge=0, example=85.5)
 
     # Normalize casing so "yes", "YES", "Yes" all work
-    @validator(
+    @field_validator(
         'Partner', 'Dependents', 'PhoneService', 'PaperlessBilling',
         'OnlineSecurity', 'OnlineBackup', 'DeviceProtection',
-        'TechSupport', 'StreamingTV', 'StreamingMovies', pre=True
+        'TechSupport', 'StreamingTV', 'StreamingMovies', mode='before'
     )
+    @classmethod
     def title_case_yesno(cls, v):
         if pd.isna(v): return "No"
         return str(v).strip().title()
 
-    @validator('gender', pre=True)
+    @field_validator('gender', mode='before')
+    @classmethod
     def title_case_gender(cls, v):
         if pd.isna(v): return "Male"
         return str(v).strip().title()
 
-    @validator('InternetService', 'Contract', 'PaymentMethod', 'MultipleLines', pre=True)
+    @field_validator('InternetService', 'Contract', 'PaymentMethod', 'MultipleLines', mode='before')
+    @classmethod
     def strip_whitespace(cls, v):
         if pd.isna(v): return ""
         return str(v).strip()
@@ -214,7 +212,7 @@ def preprocess_batch(raw: pd.DataFrame) -> np.ndarray:
     return raw_scaled
 
 def preprocess_input(data: CustomerData) -> np.ndarray:
-    raw = pd.DataFrame([data.dict()])
+    raw = pd.DataFrame([data.model_dump()])
     return preprocess_batch(raw)
 
 # ─────────────────────────────────────────────────────────

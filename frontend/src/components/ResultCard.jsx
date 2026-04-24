@@ -117,6 +117,20 @@ export default function ResultCard({ result, loading }) {
 
   const { churn_probability, churn_prediction, risk_level, model_used, top_reasons } = result
 
+  const handleCopy = () => {
+    const pct = Math.round(churn_probability * 100)
+    const text = `Churn Prediction Result
+Risk: ${risk_level}
+Probability: ${pct}%
+Verdict: ${churn_prediction ? 'Will Churn' : 'Will Stay'}
+Top Reason: ${top_reasons[0]?.feature} (${top_reasons[0]?.direction})
+Model: ${model_used}`
+    navigator.clipboard.writeText(text)
+      .then(() => alert('Result copied to clipboard!'))
+  }
+
+  const handlePrint = () => window.print()
+
   // Mapping RetainIQ SVG colors
   const ringColor = {
     High: 'var(--danger)',   /* #EF4444 */
@@ -146,6 +160,11 @@ export default function ResultCard({ result, loading }) {
         <div className="result-content">
           
           <RiskRing pct={pct} color={ringColor} />
+
+          <div className="result-actions" style={{ marginBottom: '1.5rem', marginTop: '-0.5rem' }}>
+            <button className="action-btn" onClick={handleCopy}>Copy Result</button>
+            <button className="action-btn" onClick={handlePrint}>Print / Save PDF</button>
+          </div>
 
           <div>
             <h3 className="reasons-title">Top Risk Drivers (SHAP)</h3>
