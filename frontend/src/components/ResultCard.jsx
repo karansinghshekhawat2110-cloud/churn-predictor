@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ClipboardList, Award, ShieldCheck, Headset, Wifi, DollarSign, CreditCard, ActivitySquare } from 'lucide-react'
+import { ClipboardList, Award, ShieldCheck, Headset, Wifi, DollarSign, CreditCard, Activity } from 'lucide-react'
 import './ResultCard.css'
 
 const actionMap = {
@@ -107,7 +107,7 @@ export default function ResultCard({ result, loading }) {
   // Empty State with Lucide Icon mapping
   if (!result) return (
     <motion.div variants={mountAnimationVariants} initial="hidden" animate="visible" className="result-card center">
-       <ActivitySquare size={56} style={{ color: 'var(--surface-2)', marginBottom: '1rem' }} />
+       <Activity size={56} style={{ color: 'var(--surface-2)', marginBottom: '1rem' }} />
        <p className="empty-label">
          Waiting for pipeline.<br />
          Complete the wizard and analyze.

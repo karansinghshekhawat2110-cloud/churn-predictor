@@ -1,7 +1,7 @@
 import { useState, useRef, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { toast } from 'react-hot-toast'
-import { UploadCloud, DownloadCloud, ArrowUp, ArrowDown, ChevronsUpDown } from 'lucide-react'
+import { Upload, Download, ArrowUp, ArrowDown, ChevronsUpDown } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
 export default function BulkUploadView() {
@@ -103,7 +103,7 @@ export default function BulkUploadView() {
           className="dropzone"
           onClick={() => fileInputRef.current?.click()}
         >
-          <UploadCloud className="dropzone-icon" size={38} />
+          <Upload className="dropzone-icon" size={38} />
           <div className="dropzone-title">Upload Bulk CSV</div>
           <div className="dropzone-desc">Drag and drop your .csv file here, or click to browse</div>
           <input 
@@ -156,7 +156,7 @@ export default function BulkUploadView() {
                 onClick={exportCSV}
                 style={{ padding: '0.4rem 0.8rem', background: 'var(--surface-2)', border: '1px solid var(--border-2)', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text)' }}
               >
-                <DownloadCloud size={14} /> Output CSV
+                <Download size={14} /> Output CSV
               </button>
             </div>
             <div className="bulk-table-container">
