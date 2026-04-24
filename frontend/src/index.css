@@ -1,27 +1,24 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* RetainIQ Brand System */
-  --bg:        #0F172A; /* Muted Dark Navy */
-  --surface:   #FFFFFF; /* White Cards */
-  --surface-2: #F8FAFC; /* Slate 50 */
-  --border:    #E2E8F0; /* Slate 200 */
-  --border-2:  #CBD5E1; /* Slate 300 */
-  --accent:    #6366F1; /* Indigo Accent */
-  --accent-hover: #4F46E5;
-  --success:   #22C55E; /* Modern Green */
-  --success-bg:#dcfce7;
-  --warning:   #F59E0B; /* Amber */
-  --warning-bg:#fef3c7;
-  --danger:    #EF4444; /* Vivid Red */
-  --danger-bg: #fee2e2;
-  
-  --text:      #0F172A; /* Slate 900 for internal card text */
-  --text-light:#FFFFFF; /* White for external app text on Navy */
-  --muted:     #64748B; /* Slate 500 */
-  
-  --font-body: 'Inter', sans-serif;
-  --font-mono: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace;
+  --bg: #0F172A;          /* page background */
+  --surface: #1E293B;     /* card background */
+  --surface-2: #334155;   /* hover / input bg */
+  --border: rgba(255,255,255,0.08);
+  --border-2: rgba(255,255,255,0.15);
+  --text: #F1F5F9;
+  --muted: #94A3B8;
+  --accent: #6366F1;      /* indigo — primary CTA */
+  --accent-hover: #818CF8;
+  --success: #22C55E;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --success-bg: rgba(34,197,94,0.1);
+  --warning-bg: rgba(245,158,11,0.1);
+  --danger-bg: rgba(239,68,68,0.1);
+  --font-mono: 'JetBrains Mono', monospace;
+  --radius: 10px;
+  --radius-lg: 14px;
 }
 
 *, *::before, *::after { 

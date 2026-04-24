@@ -1,11 +1,13 @@
 import { useState, useRef, useMemo } from 'react'
+import { motion } from 'framer-motion'
+import { toast } from 'react-hot-toast'
+import { UploadCloud, DownloadCloud, ArrowUp, ArrowDown, ChevronsUpDown } from 'lucide-react'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
 export default function BulkUploadView() {
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
   const [batchResult, setBatchResult] = useState(null)
   
-  // Sorting State
   const [sortConfig, setSortConfig] = useState({ key: 'churn_probability', direction: 'descending' })
   const fileInputRef = useRef(null)
 
@@ -13,14 +15,12 @@ export default function BulkUploadView() {
     const file = e.target.files[0]
     if (!file) return
     
-    // Check if it's a CSV
     if (!file.name.endsWith('.csv')) {
-      setError("Please upload a valid .csv file.")
+      toast.error("Please upload a valid .csv file format.")
       return
     }
 
     setLoading(true)
-    setError(null)
     setBatchResult(null)
 
     const formData = new FormData()
@@ -39,8 +39,9 @@ export default function BulkUploadView() {
 
       const data = await response.json()
       setBatchResult(data)
+      toast.success("Batch successfully compiled.")
     } catch (err) {
-      setError(err.message)
+      toast.error(err.message)
     } finally {
       setLoading(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
@@ -91,19 +92,18 @@ export default function BulkUploadView() {
   const med = batchResult?.results.filter(r=>r.risk_level === 'Medium').length || 0;
   const low = batchResult?.results.filter(r=>r.risk_level === 'Low').length || 0;
 
+  // Recharts format
+  const distributionData = [{ name: 'Risk', High: high, Medium: med, Low: low }]
+
   return (
-    <div className="bulk-container">
+    <motion.div initial={{opacity: 0}} animate={{opacity: 1}} className="bulk-container">
       
       {!batchResult && (
         <div 
           className="dropzone"
           onClick={() => fileInputRef.current?.click()}
         >
-          <svg className="dropzone-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="17 8 12 3 7 8"></polyline>
-            <line x1="12" y1="3" x2="12" y2="15"></line>
-          </svg>
+          <UploadCloud className="dropzone-icon" size={38} />
           <div className="dropzone-title">Upload Bulk CSV</div>
           <div className="dropzone-desc">Drag and drop your .csv file here, or click to browse</div>
           <input 
@@ -113,14 +113,13 @@ export default function BulkUploadView() {
             style={{ display: 'none' }} 
             onChange={handleFileChange}
           />
-          {loading && <div style={{ marginTop: '1rem', color: 'var(--accent)', fontWeight: '600' }}>Processing via Engine...</div>}
-          {error && <div style={{ marginTop: '1rem', color: 'var(--danger)', fontWeight: '600' }}>Error: {error}</div>}
+          {loading && <div style={{ marginTop: '1rem', color: 'var(--accent)', fontWeight: '600' }}>Processing Engine Vectors...</div>}
         </div>
       )}
 
       {batchResult && (
-        <div className="dashboard-results">
-          {/* Dashboard Summary UI */}
+        <motion.div initial={{opacity: 0, scale: 0.98}} animate={{opacity: 1, scale: 1}} className="dashboard-results">
+          
           <div className="dashboard-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
              <div style={{ background: 'var(--surface-2)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
                <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--accent)', fontWeight: '700' }}>Total Analyzed</div>
@@ -136,14 +135,18 @@ export default function BulkUploadView() {
              </div>
           </div>
 
-          {/* Stacked Risk Distribution Bar */}
           <div style={{ marginBottom: '2rem' }}>
-            <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '0.4rem', color: 'var(--muted)' }}>Risk Distribution</div>
-            <div style={{ display: 'flex', width: '100%', height: '12px', borderRadius: '6px', overflow: 'hidden', background: 'var(--surface-2)' }}>
-               {high > 0 && <div style={{ width: `${(high/total)*100}%`, background: 'var(--danger)', transition: 'width 1s ease' }} title={`High: ${high}`} />}
-               {med > 0 && <div style={{ width: `${(med/total)*100}%`, background: 'var(--warning)', transition: 'width 1s ease' }} title={`Medium: ${med}`} />}
-               {low > 0 && <div style={{ width: `${(low/total)*100}%`, background: 'var(--success)', transition: 'width 1s ease' }} title={`Low: ${low}`} />}
-            </div>
+            <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '0.4rem', color: 'var(--muted)' }}>Risk Distribution Matrix</div>
+            <ResponsiveContainer width="100%" height={32}>
+              <BarChart layout="vertical" data={distributionData} margin={{top:0, right:0, left:0, bottom:0}} barSize={32}>
+                <XAxis type="number" hide />
+                <YAxis dataKey="name" type="category" hide />
+                <Tooltip cursor={{fill: 'transparent'}} contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '6px' }} />
+                <Bar dataKey="High" stackId="a" fill="var(--danger)" radius={[4, 0, 0, 4]} />
+                <Bar dataKey="Medium" stackId="a" fill="var(--warning)" />
+                <Bar dataKey="Low" stackId="a" fill="var(--success)" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
 
           <div className="bulk-results-card">
@@ -151,9 +154,9 @@ export default function BulkUploadView() {
               <span className="bulk-stat">Prediction Results</span>
               <button 
                 onClick={exportCSV}
-                style={{ padding: '0.4rem 0.8rem', background: '#FFF', border: '1px solid var(--border-2)', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', display: 'flex', gap: '0.4rem', color: 'var(--text)' }}
+                style={{ padding: '0.4rem 0.8rem', background: 'var(--surface-2)', border: '1px solid var(--border-2)', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text)' }}
               >
-                Output CSV ⬇️
+                <DownloadCloud size={14} /> Output CSV
               </button>
             </div>
             <div className="bulk-table-container">
@@ -162,7 +165,12 @@ export default function BulkUploadView() {
                   <tr>
                     <th>Customer ID</th>
                     <th onClick={() => requestSort('churn_probability')} style={{ cursor: 'pointer' }}>
-                      Churn Risk {sortConfig?.key === 'churn_probability' ? (sortConfig.direction === 'ascending' ? '↑' : '↓') : '↕'}
+                      <div style={{display: 'flex', alignItems: 'center', gap: '4px'}}>
+                        Churn Risk 
+                        {sortConfig?.key === 'churn_probability' ? 
+                          (sortConfig.direction === 'ascending' ? <ArrowUp size={12}/> : <ArrowDown size={12}/>) 
+                          : <ChevronsUpDown size={12} color="var(--muted)" />}
+                      </div>
                     </th>
                     <th>Status</th>
                     <th>Top Risk Factor (SHAP)</th>
@@ -198,8 +206,8 @@ export default function BulkUploadView() {
           >
             ← Upload New Batch
           </button>
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   )
 }

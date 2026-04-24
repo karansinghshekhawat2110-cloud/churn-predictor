@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Toaster, toast } from 'react-hot-toast'
 import CustomerForm from './components/CustomerForm'
 import ResultCard from './components/ResultCard'
 import BulkUploadView from './components/BulkUploadView'
@@ -8,11 +9,9 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('single')
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
 
   const handlePredict = async (formData) => {
     setLoading(true)
-    setError(null)
     setResult(null)
 
     try {
@@ -30,7 +29,7 @@ export default function App() {
       const data = await response.json()
       setResult(data)
     } catch (err) {
-      setError(err.message)
+      toast.error(err.message)
     } finally {
       setLoading(false)
     }
@@ -38,6 +37,17 @@ export default function App() {
 
   return (
     <div className="app">
+      <Toaster 
+        position="bottom-center"
+        toastOptions={{
+          style: {
+            background: 'var(--surface)',
+            color: 'var(--text)',
+            border: '1px solid var(--border)'
+          }
+        }}
+      />
+      
       <header className="header retainiq-header">
         <h1>RetainIQ</h1>
         <div className="header-tabs">
@@ -61,7 +71,7 @@ export default function App() {
           <div className="grid-layout">
             <CustomerForm onPredict={handlePredict} loading={loading} />
             <div className="result-container-flex">
-               <ResultCard result={result} error={error} loading={loading} />
+               <ResultCard result={result} loading={loading} />
             </div>
           </div>
         ) : (
