@@ -1,17 +1,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --bg:        #0d1117;
-  --surface:   #13181f;
-  --surface-2: #1a2130;
-  --border:    #222c3a;
-  --border-2:  #2d3d52;
-  --accent:    #4a90d9;
-  --success:   #2ea043;
-  --warning:   #b08c1a;
-  --danger:    #da3633;
-  --text:      #cdd9e5;
-  --muted:     #7a8fa8;
+  /* Premium Light Theme */
+  --bg:        #f8fafc; /* Slate 50 */
+  --surface:   #ffffff;
+  --surface-2: #f1f5f9; /* Slate 100 */
+  --border:    #e2e8f0; /* Slate 200 */
+  --border-2:  #cbd5e1; /* Slate 300 */
+  --accent:    #4f46e5; /* Deep Indigo */
+  --accent-hover: #4338ca;
+  --success:   #059669; /* Emerald */
+  --success-bg: #d1fae5;
+  --warning:   #d97706; /* Amber */
+  --warning-bg: #fef3c7;
+  --danger:    #dc2626; /* Crimson */
+  --danger-bg: #fee2e2;
+  --text:      #0f172a; /* Slate 900 */
+  --muted:     #64748b; /* Slate 500 */
+  
   --font-body: 'Inter', sans-serif;
   --font-mono: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace;
 }
@@ -31,9 +37,9 @@ body {
   min-height: 100vh;
 }
 
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--border); }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 3px; }
 
 input, select, button {
   font-family: inherit;

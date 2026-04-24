@@ -9,6 +9,7 @@ Why FastAPI?
 
 import sys
 import os
+import io
 
 # Add project root to path so we can import model/feature_engineering.py
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
@@ -17,7 +18,7 @@ import pickle
 import numpy as np
 import pandas as pd
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, validator
 from typing import List
@@ -50,22 +51,15 @@ app.add_middleware(
 
 # ─────────────────────────────────────────────────────────
 # 2. Load Artifacts at Startup (NOT per request)
-#
-# Why at startup?
-# Loading pickle files takes ~200-500ms each.
-# Doing it per-request would make every prediction slow.
-# FastAPI runs this once when the server boots.
 # ─────────────────────────────────────────────────────────
 
 ARTIFACTS_DIR = os.path.join(os.path.dirname(__file__), "..", "model", "artifacts")
-
 
 def load_artifact(filename: str):
     """Load a pickle artifact from the artifacts directory."""
     path = os.path.join(ARTIFACTS_DIR, filename)
     with open(path, "rb") as f:
         return pickle.load(f)
-
 
 # Load all artifacts
 model_bundle    = load_artifact("churn_model.pkl")         # dict: model + threshold + metadata
@@ -88,11 +82,6 @@ print(f"✅ Feature columns : {len(feature_columns)} cols")
 
 # ─────────────────────────────────────────────────────────
 # 3. Request Schema (Pydantic)
-#
-# Why Pydantic?
-# - Validates types before ML code even runs
-# - Auto-generates API docs at /docs
-# - Raises clean 422 errors for bad input (not cryptic ML errors)
 # ─────────────────────────────────────────────────────────
 
 class CustomerData(BaseModel):
@@ -122,79 +111,101 @@ class CustomerData(BaseModel):
         'TechSupport', 'StreamingTV', 'StreamingMovies', pre=True
     )
     def title_case_yesno(cls, v):
+        if pd.isna(v): return "No"
         return str(v).strip().title()
 
     @validator('gender', pre=True)
     def title_case_gender(cls, v):
+        if pd.isna(v): return "Male"
         return str(v).strip().title()
 
     @validator('InternetService', 'Contract', 'PaymentMethod', 'MultipleLines', pre=True)
     def strip_whitespace(cls, v):
+        if pd.isna(v): return ""
         return str(v).strip()
-    
-    
-    # ─────────────────────────────────────────────────────────
-# 4. Preprocessing Helper
-#
-# Replicates the EXACT pipeline from notebooks 02 & 03.
-# Raw JSON input → clean 31-col DataFrame ready for model.
+
+# ─────────────────────────────────────────────────────────
+# 4. Preprocessing Helper (Vectorized for Bulk)
 # ─────────────────────────────────────────────────────────
 
-def preprocess_input(data: CustomerData) -> pd.DataFrame:
-    raw = pd.DataFrame([data.dict()])
+def preprocess_batch(raw: pd.DataFrame) -> np.ndarray:
+    """Safely vectorizes preprocessing logic for 1 or N rows."""
+    df = raw.copy()
+    
+    # Text cleanups for bulk CSV
+    for col in ['Partner', 'Dependents', 'PhoneService', 'PaperlessBilling',
+                'OnlineSecurity', 'OnlineBackup', 'DeviceProtection',
+                'TechSupport', 'StreamingTV', 'StreamingMovies']:
+        if col in df.columns:
+            df[col] = df[col].astype(str).str.strip().str.title()
+            
+    if 'gender' in df.columns:
+        df['gender'] = df['gender'].astype(str).str.strip().str.title()
+        
+    for col in ['InternetService', 'Contract', 'PaymentMethod', 'MultipleLines']:
+        if col in df.columns:
+            df[col] = df[col].astype(str).str.strip()
 
-    # Binary encode Yes/No columns (same as notebook 02)
+    # Binary encode Yes/No columns
     binary_cols = [
         'Partner', 'Dependents', 'PhoneService', 'PaperlessBilling',
         'OnlineSecurity', 'OnlineBackup', 'DeviceProtection',
         'TechSupport', 'StreamingTV', 'StreamingMovies'
     ]
     for col in binary_cols:
-        raw[col] = (raw[col] == 'Yes').astype(int)
+        if col in df.columns:
+            df[col] = (df[col] == 'Yes').astype(int)
 
-    # MultipleLines has 3 values — "No phone service" and "No" both → 0
-    raw['MultipleLines'] = (raw['MultipleLines'] == 'Yes').astype(int)
+    # MultipleLines
+    if 'MultipleLines' in df.columns:
+        df['MultipleLines'] = (df['MultipleLines'] == 'Yes').astype(int)
 
-    # Gender: Male=1, Female=0
-    raw['gender'] = (raw['gender'] == 'Male').astype(int)
+    # Gender
+    if 'gender' in df.columns:
+        df['gender'] = (df['gender'] == 'Male').astype(int)
 
-    # Contract is ordinal — order matters for the model
+    # Contract
     contract_map = {'Month-to-month': 0, 'One year': 1, 'Two year': 2}
-    raw['Contract'] = raw['Contract'].map(contract_map).fillna(0).astype(int)
+    if 'Contract' in df.columns:
+        df['Contract'] = df['Contract'].map(contract_map).fillna(0).astype(int)
 
-# Manually create OHE columns — guarantees exact column names
-    # pd.get_dummies was producing 'InternetService_0' instead of 'InternetService_DSL'
-    internet = raw['InternetService'].iloc[0]
-    raw['InternetService_DSL']         = int(internet == 'DSL')
-    raw['InternetService_Fiber optic'] = int(internet == 'Fiber optic')
-    raw['InternetService_0']           = int(internet == 'No')
+    # InternetService OHE mapped safely (Vectorized)
+    if 'InternetService' in df.columns:
+        internet = df['InternetService']
+        df['InternetService_DSL']         = (internet == 'DSL').astype(int)
+        df['InternetService_Fiber optic'] = (internet == 'Fiber optic').astype(int)
+        df['InternetService_0']           = (internet == 'No').astype(int)
+
+    # PaymentMethod OHE mapped safely
+    if 'PaymentMethod' in df.columns:
+        payment = df['PaymentMethod']
+        df['PaymentMethod_Bank transfer (automatic)'] = (payment == 'Bank transfer (automatic)').astype(int)
+        df['PaymentMethod_Credit card (automatic)']   = (payment == 'Credit card (automatic)').astype(int)
+        df['PaymentMethod_Electronic check']          = (payment == 'Electronic check').astype(int)
+        df['PaymentMethod_Mailed check']              = (payment == 'Mailed check').astype(int)
+
+    df.drop(columns=['InternetService', 'PaymentMethod'], inplace=True, errors='ignore')
+
+    # Add 8 engineered features
+    df = engineer_features(df)
+
+    # Align columns explicitly for scaling
+    for col in feature_columns:
+        if col not in df.columns:
+            df[col] = 0
+
+    df = df[feature_columns]
     
-
-    payment = raw['PaymentMethod'].iloc[0]
-    raw['PaymentMethod_Bank transfer (automatic)'] = int(payment == 'Bank transfer (automatic)')
-    raw['PaymentMethod_Credit card (automatic)']   = int(payment == 'Credit card (automatic)')
-    raw['PaymentMethod_Electronic check']          = int(payment == 'Electronic check')
-    raw['PaymentMethod_Mailed check']              = int(payment == 'Mailed check')
-
-    raw.drop(columns=['InternetService', 'PaymentMethod'], inplace=True)
-
-    # Add 8 engineered features (same function used during training)
-    
-    raw = engineer_features(raw)
-
-    # Align to exact 31-col order used during training — critical, model breaks without this
-    raw = raw[feature_columns]
-
-    # Apply RobustScaler (fitted on training data, loaded from artifact)
-    raw_scaled = preprocessor.transform(raw)
-
+    # Scale
+    raw_scaled = preprocessor.transform(df)
     return raw_scaled
+
+def preprocess_input(data: CustomerData) -> np.ndarray:
+    raw = pd.DataFrame([data.dict()])
+    return preprocess_batch(raw)
 
 # ─────────────────────────────────────────────────────────
 # 5. Response Schema
-#
-# Defines exactly what /predict returns.
-# Typed responses = auto-documented in /docs.
 # ─────────────────────────────────────────────────────────
 
 class ShapReason(BaseModel):
@@ -203,20 +214,27 @@ class ShapReason(BaseModel):
     direction: str  # "increases risk" or "decreases risk"
 
 class PredictionResponse(BaseModel):
-    churn_probability: float   # raw probability 0.0 - 1.0
-    churn_prediction: bool     # True/False based on tuned threshold
-    risk_level: str            # "Low" / "Medium" / "High"
-    threshold_used: float      # so frontend can show it
-    model_used: str            # XGBoost or RandomForest
-    top_reasons: List[ShapReason]  # top 5 SHAP drivers
+    churn_probability: float
+    churn_prediction: bool
+    risk_level: str
+    threshold_used: float
+    model_used: str
+    top_reasons: List[ShapReason]
 
+class BatchPredictionResult(BaseModel):
+    customer_id: str
+    churn_probability: float
+    risk_level: str
+    churn_prediction: bool
+    top_reasons: List[ShapReason]
+
+class BatchResponse(BaseModel):
+    total_processed: int
+    total_high_risk: int
+    results: List[BatchPredictionResult]
 
 # ─────────────────────────────────────────────────────────
 # 6. Risk Level Helper
-#
-# Bucketing probability into human-readable risk.
-# Thresholds chosen to match business intuition:
-# <30% = safe, 30-60% = watch, >60% = act now
 # ─────────────────────────────────────────────────────────
 
 def get_risk_level(probability: float) -> str:
@@ -227,14 +245,12 @@ def get_risk_level(probability: float) -> str:
     else:
         return "Low"
 
-
 # ─────────────────────────────────────────────────────────
 # 7. Endpoints
 # ─────────────────────────────────────────────────────────
 
 @app.get("/health")
 def health():
-    """Quick check that the API is alive and model is loaded."""
     return {
         "status": "ok",
         "model": MODEL_NAME,
@@ -243,43 +259,25 @@ def health():
         "threshold": round(THRESHOLD, 4),
     }
 
-
 @app.post("/predict", response_model=PredictionResponse)
 def predict(customer: CustomerData):
-    """
-    Accepts raw customer data, runs full pipeline, returns churn prediction + SHAP reasons.
-    """
     try:
-        # Step 1: preprocess raw input → scaled 31-col array
         X = preprocess_input(customer)
-
-        # Step 2: get churn probability (column 1 = churn class)
         probability = float(MODEL.predict_proba(X)[0][1])
-
-        # Step 3: apply tuned threshold (not default 0.5)
         prediction = probability >= THRESHOLD
-
-        # Step 4: compute SHAP values for this single prediction
+        
         shap_values = explainer.shap_values(X)
+        if isinstance(shap_values, list): sv = shap_values[1][0]
+        elif shap_values.ndim == 3: sv = shap_values[0, :, 1]
+        else: sv = shap_values[0]
 
-        # Handle shape: TreeExplainer returns (n, features, 2) for classifiers
-        # We want churn class (index 1) for a single row
-        if isinstance(shap_values, list):
-            sv = shap_values[1][0]   # list format: [class0, class1]
-        elif shap_values.ndim == 3:
-            sv = shap_values[0, :, 1]  # array format: (1, features, 2)
-        else:
-            sv = shap_values[0]       # already (1, features)
-
-        # Step 5: pick top 5 features by absolute SHAP value
         indices = np.argsort(np.abs(sv))[::-1][:5]
         top_reasons = [
             ShapReason(
                 feature=feature_columns[i],
                 effect=round(float(sv[i]), 4),
                 direction="increases risk" if sv[i] > 0 else "decreases risk"
-            )
-            for i in indices
+            ) for i in indices
         ]
 
         return PredictionResponse(
@@ -292,8 +290,72 @@ def predict(customer: CustomerData):
         )
 
     except Exception as e:
-        # Raise HTTP 500 with the actual error — useful during development
         raise HTTPException(status_code=500, detail=str(e))
-    
-  
-    
+
+@app.post("/predict_batch", response_model=BatchResponse)
+async def predict_batch(file: UploadFile = File(...)):
+    try:
+        contents = await file.read()
+        df = pd.read_csv(io.BytesIO(contents))
+        
+        # Resolve Customer IDs
+        if "customerID" in df.columns:
+            customer_ids = df["customerID"].astype(str).tolist()
+        elif "CustomerID" in df.columns:
+            customer_ids = df["CustomerID"].astype(str).tolist()
+        else:
+            customer_ids = [f"Row-{i+1}" for i in range(len(df))]
+            
+        drop_cols = [c for c in df.columns if "customer" in c.lower() or "id" in c.lower() or c.lower() == "churn"]
+        df_clean = df.drop(columns=drop_cols, errors='ignore')
+        
+        # Vectorized process
+        X = preprocess_batch(df_clean)
+        
+        # Vectorized inference
+        probabilities = MODEL.predict_proba(X)[:, 1]
+        predictions = probabilities >= THRESHOLD
+        
+        # Vectorized SHAP computation
+        shap_values = explainer.shap_values(X)
+        if isinstance(shap_values, list): sv = shap_values[1]
+        elif shap_values.ndim == 3: sv = shap_values[:, :, 1]
+        else: sv = shap_values
+            
+        results = []
+        total_high = 0
+        
+        # Package Option B (Top 2 Insights per row)
+        for i in range(len(df_clean)):
+            prob = float(probabilities[i])
+            pred = bool(predictions[i])
+            risk = get_risk_level(prob)
+            if risk == "High": total_high += 1
+                
+            row_sv = sv[i]
+            # Top 2 reasons for batch to prevent overwhelming UI
+            indices = np.argsort(np.abs(row_sv))[::-1][:2]
+            top_reasons = [
+                ShapReason(
+                    feature=feature_columns[idx],
+                    effect=round(float(row_sv[idx]), 4),
+                    direction="increases risk" if row_sv[idx] > 0 else "decreases risk"
+                ) for idx in indices
+            ]
+                
+            results.append(BatchPredictionResult(
+                customer_id=customer_ids[i],
+                churn_probability=round(prob, 4),
+                risk_level=risk,
+                churn_prediction=pred,
+                top_reasons=top_reasons
+            ))
+            
+        return BatchResponse(
+            total_processed=len(df),
+            total_high_risk=total_high,
+            results=results
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

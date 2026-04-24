@@ -6,58 +6,179 @@
 }
 
 .header {
-  padding: 0.9rem 2rem;
+  padding: 1rem 2rem;
   border-bottom: 1px solid var(--border);
   background: var(--surface);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: relative;
+  z-index: 20;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
 }
 
 .header h1 {
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-size: 16px;
+  font-weight: 700;
   color: var(--text);
+  letter-spacing: -0.02em;
 }
 
-.header p {
+.header-tabs {
+  display: flex;
+  gap: 0.5rem;
+  background: var(--surface-2);
+  padding: 0.25rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.tab-btn {
+  padding: 0.4rem 1rem;
   font-size: 12px;
+  font-weight: 600;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
   color: var(--muted);
-  font-family: var(--font-mono);
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.corporate-banner {
-  width: 100%;
-  height: 140px;
-  background-image: url('https://images.unsplash.com/photo-1544197150-b99a580bb7a8?q=80&w=2070&auto=format&fit=crop');
-  background-size: cover;
-  background-position: center 30%;
-  position: relative;
-  border-bottom: 1px solid var(--border);
-}
-
-.corporate-banner::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to bottom, rgba(13, 17, 23, 0.4), rgba(13, 17, 23, 0.95));
-  mix-blend-mode: multiply;
+.tab-btn.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
 .main {
   max-width: 1100px;
-  margin: -40px auto 0;
-  padding: 0 2rem 4rem;
+  margin: 2rem auto 4rem;
+  padding: 0 2rem;
+  width: 100%;
+}
+
+.grid-layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 2rem;
   align-items: start;
-  position: relative;
-  z-index: 10;
 }
 
+/* Bulk Upload CSS */
+.bulk-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.dropzone {
+  background: var(--surface);
+  border: 2px dashed var(--border-2);
+  border-radius: 12px;
+  padding: 3rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dropzone:hover {
+  border-color: var(--accent);
+  background: var(--surface-2);
+}
+
+.dropzone-icon {
+  margin-bottom: 1rem;
+  color: var(--accent);
+}
+
+.dropzone-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.dropzone-desc {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.bulk-results-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.bulk-header {
+  padding: 1.25rem 1.5rem;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bulk-stat {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.bulk-table-container {
+  overflow-x: auto;
+}
+
+.bulk-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.bulk-table th {
+  background: var(--surface);
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.bulk-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--surface-2);
+  color: var(--text);
+}
+
+.bulk-table tr:hover td {
+  background: var(--surface-2);
+}
+
+.bulk-badge {
+  display: inline-flex;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.bulk-badge.high { background: var(--danger-bg); color: var(--danger); }
+.bulk-badge.medium { background: var(--warning-bg); color: var(--warning); }
+.bulk-badge.low { background: var(--success-bg); color: var(--success); }
+
+/* Remove old corporate banner from dark mode */
 @media (max-width: 768px) {
-  .main { grid-template-columns: 1fr; padding: 0 1rem 2rem; }
-  .header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+  .grid-layout { grid-template-columns: 1fr; }
+  .header { flex-direction: column; align-items: stretch; gap: 1rem; }
+  .header-tabs { display: flex; text-align: center; }
+  .tab-btn { flex: 1; }
 }

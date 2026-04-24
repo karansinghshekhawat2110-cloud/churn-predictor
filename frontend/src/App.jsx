@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import CustomerForm from './components/CustomerForm'
 import ResultCard from './components/ResultCard'
+import BulkUploadView from './components/BulkUploadView'
 import './App.css'
 
 export default function App() {
+  const [activeTab, setActiveTab] = useState('single')
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -37,16 +39,32 @@ export default function App() {
   return (
     <div className="app">
       <header className="header">
-        <h1>[ Churn Predictor ]</h1>
-        <p>[ XGBoost · SHAP Explained · IBM Telco ]</p>
+        <h1>XGBoost / Churn Predictor</h1>
+        <div className="header-tabs">
+          <button 
+            className={`tab-btn ${activeTab === 'single' ? 'active' : ''}`}
+            onClick={() => setActiveTab('single')}
+          >
+            Single Profile
+          </button>
+          <button 
+            className={`tab-btn ${activeTab === 'bulk' ? 'active' : ''}`}
+            onClick={() => setActiveTab('bulk')}
+          >
+            Batch CSV
+          </button>
+        </div>
       </header>
       
-      {/* Real-world sophisticated corporate banner integration */}
-      <div className="corporate-banner"></div>
-
       <main className="main">
-        <CustomerForm onPredict={handlePredict} loading={loading} />
-        <ResultCard result={result} error={error} loading={loading} />
+        {activeTab === 'single' ? (
+          <div className="grid-layout">
+            <CustomerForm onPredict={handlePredict} loading={loading} />
+            <ResultCard result={result} error={error} loading={loading} />
+          </div>
+        ) : (
+          <BulkUploadView />
+        )}
       </main>
     </div>
   )
