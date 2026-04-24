@@ -37,7 +37,12 @@ export default function CustomerForm({ onPredict, loading }) {
   return (
     <div className="form-card">
       <div className="form-header">
-        <div className="customer-avatar" title="Customer Profile Representative"></div>
+        <div className="customer-avatar-interactive">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </div>
         <h2 className="form-title">Customer Profile</h2>
       </div>
 

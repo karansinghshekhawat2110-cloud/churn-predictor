@@ -50,8 +50,10 @@ export default function ResultCard({ result, error, loading }) {
     <div className="result-card">
       <div className="result-content">
         
-        {/* Subtle photo marker based on prediction */}
-        <div className={`result-photo-marker ${churn_prediction ? 'churned' : 'stayed'}`}></div>
+        {/* Interactive Data Art based on prediction */}
+        <div className={`result-visualizer ${churn_prediction ? 'churned' : 'stayed'}`}>
+          <div className="visualizer-mesh"></div>
+        </div>
 
         <div className="risk-badge" style={badgeStyles}>
           {risk_level} Risk

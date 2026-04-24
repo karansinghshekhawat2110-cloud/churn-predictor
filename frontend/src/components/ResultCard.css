@@ -44,22 +44,59 @@
   50% { opacity: 1; }
 }
 
-.result-photo-marker {
+.result-visualizer {
   width: 100%;
-  height: 64px;
+  height: 48px;
   border-radius: 6px;
-  background-size: cover;
-  background-position: center;
-  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
   margin-bottom: -0.5rem;
+  background: var(--surface-2);
+  transition: all 0.4s ease;
 }
 
-.result-photo-marker.churned {
-  background-image: url('https://images.unsplash.com/photo-1598257006626-48b0c252070d?q=80&w=2070&auto=format&fit=crop');
+.result-visualizer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.25;
+  background-image: radial-gradient(circle at 2px 2px, var(--muted) 1px, transparent 0);
+  background-size: 14px 14px;
 }
 
-.result-photo-marker.stayed {
-  background-image: url('https://images.unsplash.com/photo-1543269865-cbf427effbad?q=80&w=2070&auto=format&fit=crop');
+.result-visualizer.stayed {
+  background: linear-gradient(90deg, rgba(5, 150, 105, 0.08) 0%, transparent 100%);
+  border: 1px solid rgba(5, 150, 105, 0.15);
+}
+
+.result-visualizer.churned {
+  background: linear-gradient(90deg, rgba(220, 38, 38, 0.08) 0%, transparent 100%);
+  border: 1px solid rgba(220, 38, 38, 0.15);
+}
+
+.visualizer-mesh {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 4px;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.result-visualizer.stayed .visualizer-mesh {
+  background: var(--success);
+}
+
+.result-visualizer.churned .visualizer-mesh {
+  background: var(--danger);
+  width: 100%;
+  opacity: 0.15;
+  animation: pulse-danger 2s infinite ease-in-out;
+}
+
+@keyframes pulse-danger {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.25; }
 }
 
 .risk-badge {
