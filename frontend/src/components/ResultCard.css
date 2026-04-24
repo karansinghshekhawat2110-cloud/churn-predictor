@@ -1,20 +1,30 @@
 .result-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 1.5rem;
+  border-radius: 12px;
+  padding: 2rem;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.5rem;
   position: sticky;
   top: 2rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08); /* RetainIQ shadow */
+}
+
+/* 2. Keyframe entrance hook */
+.result-card-anim {
+  animation: slideUp 200ms ease-out forwards;
+}
+
+@keyframes slideUp {
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 .result-card.center {
   align-items: center;
   justify-content: center;
-  min-height: 280px;
+  min-height: 400px;
   text-align: center;
 }
 
@@ -44,135 +54,28 @@
   50% { opacity: 1; }
 }
 
-.result-visualizer {
-  width: 100%;
-  height: 48px;
-  border-radius: 6px;
-  position: relative;
-  overflow: hidden;
-  margin-bottom: -0.5rem;
-  background: var(--surface-2);
-  transition: all 0.4s ease;
-}
-
-.result-visualizer::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  opacity: 0.25;
-  background-image: radial-gradient(circle at 2px 2px, var(--muted) 1px, transparent 0);
-  background-size: 14px 14px;
-}
-
-.result-visualizer.stayed {
-  background: linear-gradient(90deg, rgba(5, 150, 105, 0.08) 0%, transparent 100%);
-  border: 1px solid rgba(5, 150, 105, 0.15);
-}
-
-.result-visualizer.churned {
-  background: linear-gradient(90deg, rgba(220, 38, 38, 0.08) 0%, transparent 100%);
-  border: 1px solid rgba(220, 38, 38, 0.15);
-}
-
-.visualizer-mesh {
-  position: absolute;
-  left: 0;
-  top: 0;
-  height: 100%;
-  width: 4px;
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.result-visualizer.stayed .visualizer-mesh {
-  background: var(--success);
-}
-
-.result-visualizer.churned .visualizer-mesh {
-  background: var(--danger);
-  width: 100%;
-  opacity: 0.15;
-  animation: pulse-danger 2s infinite ease-in-out;
-}
-
-@keyframes pulse-danger {
-  0%, 100% { opacity: 0.15; }
-  50% { opacity: 0.25; }
-}
-
-.risk-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.3rem 0.75rem;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 700;
-  align-self: flex-start;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.gauge-label {
+.result-content {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 0.4rem;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.gauge-label span:first-child {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.gauge-pct {
-  font-family: var(--font-mono);
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--text);
-  letter-spacing: -0.03em;
-}
-
-.gauge-track {
-  height: 8px;
-  background: var(--surface-2);
-  border-radius: 4px;
-  overflow: hidden;
-  margin-bottom: 0.4rem;
-  border: 1px solid var(--border);
-}
-
-.gauge-fill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.gauge-meta {
-  font-size: 11px;
-  color: var(--muted);
-  font-family: var(--font-mono);
-}
-
-.verdict-row {
+/* Center the Animated SVG Ring */
+.ring-container {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem;
-  background: var(--surface-2);
-  border-radius: 6px;
-  border: 1px solid var(--border);
+  justify-content: center;
+  margin: 1rem 0;
 }
 
 .reasons-title {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--muted);
-  margin-bottom: 0.4rem;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 0.4rem;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--surface-2);
+  padding-bottom: 0.5rem;
 }
 
 .reason-row {
@@ -180,7 +83,7 @@
   grid-template-columns: 18px 1fr auto;
   align-items: center;
   gap: 0.5rem 0.75rem;
-  padding: 0.5rem 0;
+  padding: 0.6rem 0;
   border-bottom: 1px solid var(--surface-2);
 }
 
@@ -198,6 +101,7 @@
 .reason-feature {
   font-family: var(--font-mono);
   font-size: 12px;
+  font-weight: 500;
   color: var(--text);
 }
 
@@ -209,18 +113,72 @@
   overflow: hidden;
 }
 
+/* 3. Bar transition hook */
 .reason-bar-fill {
   height: 100%;
   border-radius: 2px;
+  transition: width 0.6s ease;
 }
 
 .reason-effect {
   font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--muted);
-  min-width: 40px;
-  text-align: right;
+  font-size: 12px;
   font-weight: 600;
+  color: var(--muted);
+  min-width: 44px;
+  text-align: right;
+}
+
+/* Action Cards */
+.action-section {
+  animation: fadeIn 0.4s ease 0.2s backwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.action-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.action-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.85rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+.action-icon {
+  color: var(--accent);
+  margin-top: 0.1rem;
+}
+
+.action-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.action-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.action-desc {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
 }
 
 .result-footer {
@@ -228,6 +186,33 @@
   color: var(--muted);
   font-family: var(--font-mono);
   text-align: right;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+  border-top: 1px solid var(--surface-2);
+}
+
+.result-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.action-btn {
+  flex: 1;
+  padding: 0.4rem 0.75rem;
+  font-size: 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.action-btn:hover {
+  border-color: var(--border-2);
+  color: var(--text);
+}
+
+@media print {
+  .form-card, .header, .cold-start-banner, .result-actions { display: none !important; }
+  .result-card { border: none; padding: 0; }
 }

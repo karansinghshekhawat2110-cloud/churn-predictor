@@ -1,25 +1,24 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* Premium Light Theme */
-  --bg:        #f8fafc; /* Slate 50 */
-  --surface:   #ffffff;
-  --surface-2: #f1f5f9; /* Slate 100 */
-  --border:    #e2e8f0; /* Slate 200 */
-  --border-2:  #cbd5e1; /* Slate 300 */
-  --accent:    #4f46e5; /* Deep Indigo */
-  --accent-hover: #4338ca;
-  --success:   #059669; /* Emerald */
-  --success-bg: #d1fae5;
-  --warning:   #d97706; /* Amber */
-  --warning-bg: #fef3c7;
-  --danger:    #dc2626; /* Crimson */
-  --danger-bg: #fee2e2;
-  --text:      #0f172a; /* Slate 900 */
-  --muted:     #64748b; /* Slate 500 */
-  
-  --font-body: 'Inter', sans-serif;
-  --font-mono: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace;
+  --bg: #0F172A;          /* page background */
+  --surface: #1E293B;     /* card background */
+  --surface-2: #334155;   /* hover / input bg */
+  --border: rgba(255,255,255,0.08);
+  --border-2: rgba(255,255,255,0.15);
+  --text: #F1F5F9;
+  --muted: #94A3B8;
+  --accent: #6366F1;      /* indigo — primary CTA */
+  --accent-hover: #818CF8;
+  --success: #22C55E;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --success-bg: rgba(34,197,94,0.1);
+  --warning-bg: rgba(245,158,11,0.1);
+  --danger-bg: rgba(239,68,68,0.1);
+  --font-mono: 'JetBrains Mono', monospace;
+  --radius: 10px;
+  --radius-lg: 14px;
 }
 
 *, *::before, *::after { 
@@ -30,7 +29,6 @@
 
 body {
   background: var(--bg);
-  color: var(--text);
   font-family: var(--font-body);
   font-size: 14px;
   line-height: 1.6;

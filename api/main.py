@@ -20,8 +20,21 @@ import pandas as pd
 
 from fastapi import FastAPI, HTTPException, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from typing import List
+from collections import defaultdict
+
+_stats = defaultdict(int)
+
+FEATURE_EXPLANATIONS = {
+  "tenure": lambda v: f"Customer has only been with you {int(v)} months",
+  "Contract": lambda v: "Customer is on a month-to-month contract",
+  "MonthlyCharges": lambda v: f"High monthly bill (${v:.0f}/mo)",
+  "InternetService_Fiber optic": lambda v: "Uses fiber optic — high expectations",
+  "OnlineSecurity": lambda v: "No online security add-on",
+  "TechSupport": lambda v: "No tech support subscription",
+  "PaymentMethod_Electronic check": lambda v: "Pays by electronic check"
+}
 
 from model.feature_engineering import engineer_features  # our custom FE function
 
@@ -38,12 +51,7 @@ app = FastAPI(
 # CORS: allow React dev server (Vite=5173, CRA=3000) and Vercel deployments
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "https://*.vercel.app",
-        "https://churn-predictor-phi.vercel.app",
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -105,21 +113,24 @@ class CustomerData(BaseModel):
     MonthlyCharges: float   = Field(..., ge=0, example=85.5)
 
     # Normalize casing so "yes", "YES", "Yes" all work
-    @validator(
+    @field_validator(
         'Partner', 'Dependents', 'PhoneService', 'PaperlessBilling',
         'OnlineSecurity', 'OnlineBackup', 'DeviceProtection',
-        'TechSupport', 'StreamingTV', 'StreamingMovies', pre=True
+        'TechSupport', 'StreamingTV', 'StreamingMovies', mode='before'
     )
+    @classmethod
     def title_case_yesno(cls, v):
         if pd.isna(v): return "No"
         return str(v).strip().title()
 
-    @validator('gender', pre=True)
+    @field_validator('gender', mode='before')
+    @classmethod
     def title_case_gender(cls, v):
         if pd.isna(v): return "Male"
         return str(v).strip().title()
 
-    @validator('InternetService', 'Contract', 'PaymentMethod', 'MultipleLines', pre=True)
+    @field_validator('InternetService', 'Contract', 'PaymentMethod', 'MultipleLines', mode='before')
+    @classmethod
     def strip_whitespace(cls, v):
         if pd.isna(v): return ""
         return str(v).strip()
@@ -201,7 +212,7 @@ def preprocess_batch(raw: pd.DataFrame) -> np.ndarray:
     return raw_scaled
 
 def preprocess_input(data: CustomerData) -> np.ndarray:
-    raw = pd.DataFrame([data.dict()])
+    raw = pd.DataFrame([data.model_dump()])
     return preprocess_batch(raw)
 
 # ─────────────────────────────────────────────────────────
@@ -220,6 +231,7 @@ class PredictionResponse(BaseModel):
     threshold_used: float
     model_used: str
     top_reasons: List[ShapReason]
+    human_reasons: List[str] = []
 
 class BatchPredictionResult(BaseModel):
     customer_id: str
@@ -259,9 +271,19 @@ def health():
         "threshold": round(THRESHOLD, 4),
     }
 
+@app.get("/stats")
+def stats():
+    return {
+        "total_predictions": _stats["single"] + _stats["batch"],
+        "single_predictions": _stats["single"],
+        "batch_rows_processed": _stats["batch"],
+        "model_roc_auc": round(TEST_ROC_AUC, 4)
+    }
+
 @app.post("/predict", response_model=PredictionResponse)
 def predict(customer: CustomerData):
     try:
+        _stats["single"] += 1
         X = preprocess_input(customer)
         probability = float(MODEL.predict_proba(X)[0][1])
         prediction = probability >= THRESHOLD
@@ -280,6 +302,13 @@ def predict(customer: CustomerData):
             ) for i in indices
         ]
 
+        human_reasons = []
+        customer_dict = customer.dict()
+        for r in top_reasons:
+            if r.feature in FEATURE_EXPLANATIONS:
+                val = customer_dict.get(r.feature, None)
+                human_reasons.append(FEATURE_EXPLANATIONS[r.feature](val))
+
         return PredictionResponse(
             churn_probability=round(probability, 4),
             churn_prediction=bool(prediction),
@@ -287,6 +316,7 @@ def predict(customer: CustomerData):
             threshold_used=round(THRESHOLD, 4),
             model_used=MODEL_NAME,
             top_reasons=top_reasons,
+            human_reasons=human_reasons
         )
 
     except Exception as e:
@@ -297,6 +327,8 @@ async def predict_batch(file: UploadFile = File(...)):
     try:
         contents = await file.read()
         df = pd.read_csv(io.BytesIO(contents))
+        
+        _stats["batch"] += len(df)
         
         # Resolve Customer IDs
         if "customerID" in df.columns:
