@@ -13,14 +13,23 @@
   margin-bottom: 1.25rem;
 }
 
-.customer-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 6px;
-  background-image: url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=600&auto=format&fit=crop');
-  background-size: cover;
-  background-position: top center;
-  border: 1px solid var(--border);
+.customer-avatar-interactive {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent) 0%, rgba(79, 70, 229, 0.6) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.25);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.customer-avatar-interactive:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 14px rgba(79, 70, 229, 0.35);
 }
 
 .form-title {
