@@ -5,75 +5,78 @@
   flex-direction: column;
 }
 
-.header {
-  padding: 1rem 2rem;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
+.retainiq-header {
+  padding: 1.25rem 2.5rem;
+  background: transparent;
+  border-bottom: 1px solid rgba(255,255,255,0.08); /* faint line on dark navy */
   display: flex;
   justify-content: space-between;
   align-items: center;
-  position: relative;
-  z-index: 20;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
 }
 
-.header h1 {
-  font-size: 16px;
+.retainiq-header h1 {
+  font-size: 18px;
   font-weight: 700;
-  color: var(--text);
-  letter-spacing: -0.02em;
+  color: var(--text-light); /* White text on navy */
+  letter-spacing: -0.01em;
 }
 
 .header-tabs {
   display: flex;
   gap: 0.5rem;
-  background: var(--surface-2);
+  background: rgba(255,255,255,0.1); /* Subtle tab track */
   padding: 0.25rem;
-  border-radius: 6px;
-  border: 1px solid var(--border);
+  border-radius: 8px;
 }
 
 .tab-btn {
-  padding: 0.4rem 1rem;
-  font-size: 12px;
+  padding: 0.4rem 1.25rem;
+  font-size: 13px;
   font-weight: 600;
-  border-radius: 4px;
+  border-radius: 6px;
   border: none;
   background: transparent;
-  color: var(--muted);
+  color: rgba(255,255,255,0.6);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .tab-btn.active {
-  background: var(--surface);
-  color: var(--text);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  background: var(--surface); /* White */
+  color: var(--text); /* Slate 900 */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
 }
 
 .main {
-  max-width: 1100px;
-  margin: 2rem auto 4rem;
+  max-width: 1000px;
+  margin: 3rem auto 4rem;
   padding: 0 2rem;
   width: 100%;
 }
 
 .grid-layout {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 340px; /* Thinner right card for ResultCard, huge form space */
   gap: 2rem;
   align-items: start;
 }
 
-/* Bulk Upload CSS */
+.result-container-flex {
+  width: 100%;
+}
+
+/* Bulk Upload - White Card Logic inside Navy App */
 .bulk-container {
   display: flex;
   flex-direction: column;
   gap: 2rem;
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 2rem;
 }
 
 .dropzone {
-  background: var(--surface);
+  background: var(--surface-2);
   border: 2px dashed var(--border-2);
   border-radius: 12px;
   padding: 3rem 2rem;
@@ -88,7 +91,7 @@
 
 .dropzone:hover {
   border-color: var(--accent);
-  background: var(--surface-2);
+  background: var(--surface);
 }
 
 .dropzone-icon {
@@ -109,11 +112,9 @@
 }
 
 .bulk-results-card {
-  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
 .bulk-header {
@@ -138,7 +139,7 @@
 .bulk-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .bulk-table th {
@@ -154,7 +155,7 @@
 
 .bulk-table td {
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--surface-2);
+  border-bottom: 1px solid var(--border);
   color: var(--text);
 }
 
@@ -164,7 +165,7 @@
 
 .bulk-badge {
   display: inline-flex;
-  padding: 0.2rem 0.5rem;
+  padding: 0.25rem 0.6rem;
   border-radius: 4px;
   font-weight: 600;
   font-size: 11px;
@@ -175,10 +176,9 @@
 .bulk-badge.medium { background: var(--warning-bg); color: var(--warning); }
 .bulk-badge.low { background: var(--success-bg); color: var(--success); }
 
-/* Remove old corporate banner from dark mode */
 @media (max-width: 768px) {
   .grid-layout { grid-template-columns: 1fr; }
-  .header { flex-direction: column; align-items: stretch; gap: 1rem; }
+  .retainiq-header { flex-direction: column; align-items: stretch; gap: 1rem; }
   .header-tabs { display: flex; text-align: center; }
   .tab-btn { flex: 1; }
 }

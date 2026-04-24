@@ -38,20 +38,20 @@ export default function App() {
 
   return (
     <div className="app">
-      <header className="header">
-        <h1>XGBoost / Churn Predictor</h1>
+      <header className="header retainiq-header">
+        <h1>RetainIQ</h1>
         <div className="header-tabs">
           <button 
             className={`tab-btn ${activeTab === 'single' ? 'active' : ''}`}
             onClick={() => setActiveTab('single')}
           >
-            Single Profile
+            Prediction Engine
           </button>
           <button 
             className={`tab-btn ${activeTab === 'bulk' ? 'active' : ''}`}
             onClick={() => setActiveTab('bulk')}
           >
-            Batch CSV
+            Batch Analysis
           </button>
         </div>
       </header>
@@ -60,7 +60,9 @@ export default function App() {
         {activeTab === 'single' ? (
           <div className="grid-layout">
             <CustomerForm onPredict={handlePredict} loading={loading} />
-            <ResultCard result={result} error={error} loading={loading} />
+            <div className="result-container-flex">
+               <ResultCard result={result} error={error} loading={loading} />
+            </div>
           </div>
         ) : (
           <BulkUploadView />

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import './CustomerForm.css'
 
 const defaultForm = {
@@ -22,10 +22,58 @@ const defaultForm = {
   MonthlyCharges: 85.5
 }
 
+// User-provided hook for live frontend heuristic risk prediction
+const getLiveRisk = (form) => {
+  let score = 0
+  if (form.tenure < 12) score += 2
+  if (form.Contract === 'Month-to-month') score += 3
+  if (form.InternetService === 'Fiber optic') score += 1
+  if (form.PaymentMethod === 'Electronic check') score += 1
+  if (form.OnlineSecurity === 'No') score += 1
+  if (score >= 5) return 'High'
+  if (score >= 3) return 'Medium'
+  return 'Low'
+}
+
+// Subcomponents
+const YesNoToggle = ({ label, value, onChange }) => (
+  <div className="toggle-group">
+    <label>{label}</label>
+    <button 
+      type="button" 
+      className={`toggle-track ${value === 'Yes' || value == 1 ? 'active' : ''}`}
+      onClick={() => onChange(value === 'Yes' ? 'No' : (value == 1 ? 0 : (value === 'No' ? 'Yes' : 1)))}
+    >
+      <div className="toggle-thumb" />
+    </button>
+  </div>
+)
+
+const PillSelector = ({ label, options, value, onChange }) => (
+  <div className="pill-group">
+    <label>{label}</label>
+    <div className="pill-container">
+      {options.map(opt => (
+        <button
+          key={opt}
+          type="button"
+          className={`pill-btn ${value === opt ? 'active' : ''}`}
+          onClick={() => onChange(opt)}
+        >
+          {opt}
+        </button>
+      ))}
+    </div>
+  </div>
+)
+
 export default function CustomerForm({ onPredict, loading }) {
   const [form, setForm] = useState(defaultForm)
+  const [step, setStep] = useState(1)
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
+
+  const liveRisk = useMemo(() => getLiveRisk(form), [form])
 
   const handleSubmit = () => onPredict({
     ...form,
@@ -34,169 +82,138 @@ export default function CustomerForm({ onPredict, loading }) {
     MonthlyCharges: parseFloat(form.MonthlyCharges)
   })
 
+  // Calculate progress bar line width
+  const progressWidth = step === 1 ? 0 : step === 2 ? 50 : 100
+
   return (
     <div className="form-card">
+      
+      {/* 3 Dot Progress Layout */}
+      <div className="wizard-progress">
+        <div className="progress-line-active" style={{ width: `${progressWidth}%` }} />
+        {[1,2,3].map(i => (
+           <div key={i} className={`progress-dot ${step >= i ? 'active' : ''}`} />
+        ))}
+      </div>
+
       <div className="form-header">
-        <div className="customer-avatar-interactive">
-          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
+        <h2 className="form-title">
+          {step === 1 && "Personal Info"}
+          {step === 2 && "Account Details"}
+          {step === 3 && "Services & Add-ons"}
+        </h2>
+        <div className="live-risk-pill" title="Rough estimate — click Predict for full analysis">
+          <div className={`risk-dot ${liveRisk}`}></div>
+          {liveRisk} Risk
         </div>
-        <h2 className="form-title">Customer Profile</h2>
       </div>
 
-      <div className="form-grid">
-
-        {/* Personal */}
-        <div className="section-label">Personal</div>
-
-        <div className="field">
-          <label>Gender</label>
-          <select value={form.gender} onChange={e => set('gender', e.target.value)}>
-            <option>Male</option><option>Female</option>
-          </select>
-        </div>
-
-        <div className="field">
-          <label>Senior Citizen</label>
-          <select value={form.SeniorCitizen} onChange={e => set('SeniorCitizen', e.target.value)}>
-            <option value={0}>No</option><option value={1}>Yes</option>
-          </select>
-        </div>
-
-        <div className="field">
-          <label>Partner</label>
-          <select value={form.Partner} onChange={e => set('Partner', e.target.value)}>
-            <option>Yes</option><option>No</option>
-          </select>
-        </div>
-
-        <div className="field">
-          <label>Dependents</label>
-          <select value={form.Dependents} onChange={e => set('Dependents', e.target.value)}>
-            <option>Yes</option><option>No</option>
-          </select>
-        </div>
-
-        {/* Account */}
-        <div className="section-label">Account</div>
-
-        <div className="field">
-          <label>Tenure (months)</label>
-          <div className="input-wrapper suffix">
-            <input type="number" min={0} max={72} value={form.tenure}
-              onChange={e => set('tenure', e.target.value)} />
-            <span className="input-suffix">mo</span>
+      <div className="form-section">
+        {step === 1 && (
+          <div className="form-grid">
+            <PillSelector 
+               label="Gender" 
+               options={['Male', 'Female']} 
+               value={form.gender} 
+               onChange={v => set('gender', v)} 
+            />
+            <YesNoToggle label="Senior Citizen" value={form.SeniorCitizen} onChange={v => set('SeniorCitizen', v)} />
+            <YesNoToggle label="Has Partner" value={form.Partner} onChange={v => set('Partner', v)} />
+            <YesNoToggle label="Has Dependents" value={form.Dependents} onChange={v => set('Dependents', v)} />
           </div>
-        </div>
+        )}
 
-        <div className="field">
-          <label>Monthly Charges</label>
-          <div className="input-wrapper prefix">
-            <span className="input-prefix">$</span>
-            <input type="number" step="0.01" min={0} value={form.MonthlyCharges}
-              onChange={e => set('MonthlyCharges', e.target.value)} />
+        {step === 2 && (
+          <div className="form-grid">
+            <div className="field-wrapper">
+              <label>Tenure (months)</label>
+              <div className="input-wrapper suffix">
+                <input type="number" className="retainiq-input" min={0} max={72} value={form.tenure}
+                  onChange={e => set('tenure', e.target.value)} />
+                <span className="input-suffix">mo</span>
+              </div>
+            </div>
+
+            <div className="field-wrapper">
+              <label>Monthly Charges</label>
+              <div className="input-wrapper prefix">
+                <span className="input-prefix">$</span>
+                <input type="number" className="retainiq-input" step="0.01" min={0} value={form.MonthlyCharges}
+                  onChange={e => set('MonthlyCharges', e.target.value)} />
+              </div>
+            </div>
+
+            <PillSelector 
+               label="Contract Type" 
+               options={['Month-to-month', 'One year', 'Two year']} 
+               value={form.Contract} 
+               onChange={v => set('Contract', v)} 
+            />
+            
+            <PillSelector 
+               label="Payment Method" 
+               options={['Electronic check', 'Mailed check', 'Bank transfer (automatic)', 'Credit card (automatic)']} 
+               value={form.PaymentMethod} 
+               onChange={v => set('PaymentMethod', v)} 
+            />
+
+            <YesNoToggle label="Paperless Billing" value={form.PaperlessBilling} onChange={v => set('PaperlessBilling', v)} />
           </div>
-        </div>
+        )}
 
-        <div className="field">
-          <label>Contract</label>
-          <select value={form.Contract} onChange={e => set('Contract', e.target.value)}>
-            <option>Month-to-month</option>
-            <option>One year</option>
-            <option>Two year</option>
-          </select>
-        </div>
+        {step === 3 && (
+          <div className="form-grid">
+            <PillSelector 
+               label="Internet Service" 
+               options={['Fiber optic', 'DSL', 'No']} 
+               value={form.InternetService} 
+               onChange={v => set('InternetService', v)} 
+            />
 
-        <div className="field">
-          <label>Payment Method</label>
-          <select value={form.PaymentMethod} onChange={e => set('PaymentMethod', e.target.value)}>
-            <option>Electronic check</option>
-            <option>Mailed check</option>
-            <option>Bank transfer (automatic)</option>
-            <option>Credit card (automatic)</option>
-          </select>
-        </div>
+            <PillSelector 
+               label="Multiple Lines" 
+               options={['Yes', 'No', 'No phone service']} 
+               value={form.MultipleLines} 
+               onChange={v => set('MultipleLines', v)} 
+            />
 
-        <div className="field">
-          <label>Paperless Billing</label>
-          <select value={form.PaperlessBilling} onChange={e => set('PaperlessBilling', e.target.value)}>
-            <option>Yes</option><option>No</option>
-          </select>
-        </div>
-
-        {/* Services */}
-        <div className="section-label">Services</div>
-
-        <div className="field">
-          <label>Phone Service</label>
-          <select value={form.PhoneService} onChange={e => set('PhoneService', e.target.value)}>
-            <option>Yes</option><option>No</option>
-          </select>
-        </div>
-
-        <div className="field">
-          <label>Multiple Lines</label>
-          <select value={form.MultipleLines} onChange={e => set('MultipleLines', e.target.value)}>
-            <option>Yes</option><option>No</option><option>No phone service</option>
-          </select>
-        </div>
-
-        <div className="field">
-          <label>Internet Service</label>
-          <select value={form.InternetService} onChange={e => set('InternetService', e.target.value)}>
-            <option>Fiber optic</option><option>DSL</option><option>No</option>
-          </select>
-        </div>
-
-        <div className="field">
-          <label>Online Security</label>
-          <select value={form.OnlineSecurity} onChange={e => set('OnlineSecurity', e.target.value)}>
-            <option>Yes</option><option>No</option>
-          </select>
-        </div>
-
-        <div className="field">
-          <label>Online Backup</label>
-          <select value={form.OnlineBackup} onChange={e => set('OnlineBackup', e.target.value)}>
-            <option>Yes</option><option>No</option>
-          </select>
-        </div>
-
-        <div className="field">
-          <label>Device Protection</label>
-          <select value={form.DeviceProtection} onChange={e => set('DeviceProtection', e.target.value)}>
-            <option>Yes</option><option>No</option>
-          </select>
-        </div>
-
-        <div className="field">
-          <label>Tech Support</label>
-          <select value={form.TechSupport} onChange={e => set('TechSupport', e.target.value)}>
-            <option>Yes</option><option>No</option>
-          </select>
-        </div>
-
-        <div className="field">
-          <label>Streaming TV</label>
-          <select value={form.StreamingTV} onChange={e => set('StreamingTV', e.target.value)}>
-            <option>Yes</option><option>No</option>
-          </select>
-        </div>
-
-        <div className="field">
-          <label>Streaming Movies</label>
-          <select value={form.StreamingMovies} onChange={e => set('StreamingMovies', e.target.value)}>
-            <option>Yes</option><option>No</option>
-          </select>
-        </div>
-
+            <YesNoToggle label="Phone Service" value={form.PhoneService} onChange={v => set('PhoneService', v)} />
+            <YesNoToggle label="Online Security" value={form.OnlineSecurity} onChange={v => set('OnlineSecurity', v)} />
+            <YesNoToggle label="Online Backup" value={form.OnlineBackup} onChange={v => set('OnlineBackup', v)} />
+            <YesNoToggle label="Device Protection" value={form.DeviceProtection} onChange={v => set('DeviceProtection', v)} />
+            <YesNoToggle label="Tech Support" value={form.TechSupport} onChange={v => set('TechSupport', v)} />
+            <YesNoToggle label="Streaming TV" value={form.StreamingTV} onChange={v => set('StreamingTV', v)} />
+            <YesNoToggle label="Streaming Movies" value={form.StreamingMovies} onChange={v => set('StreamingMovies', v)} />
+          </div>
+        )}
       </div>
 
-      <button className="predict-btn" onClick={handleSubmit} disabled={loading}>
-        {loading ? 'Predicting...' : 'Predict Churn'}
-      </button>
+      <div className="wizard-footer">
+        <button 
+          className="btn-secondary" 
+          onClick={() => setStep(s => Math.max(1, s - 1))}
+          disabled={step === 1 || loading}
+        >
+          Back
+        </button>
+
+        {step < 3 ? (
+          <button 
+            className="btn-primary" 
+            onClick={() => setStep(s => Math.min(3, s + 1))}
+          >
+            Next Step
+          </button>
+        ) : (
+          <button 
+            className="btn-primary" 
+            onClick={handleSubmit} 
+            disabled={loading}
+          >
+            {loading ? 'Analyzing...' : 'Predict Churn Pipeline'}
+          </button>
+        )}
+      </div>
     </div>
   )
 }

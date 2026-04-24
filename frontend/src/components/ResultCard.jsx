@@ -1,13 +1,49 @@
+import { useState, useEffect } from 'react'
 import './ResultCard.css'
+
+// Animated Risk Score Ring Component
+const RiskRing = ({ pct, color }) => {
+  const r = 54, circ = 2 * Math.PI * r
+  const [anim, setAnim] = useState(0)
+  
+  useEffect(() => {
+    const t = setTimeout(() => setAnim(pct), 80)
+    return () => clearTimeout(t)
+  }, [pct])
+  
+  const offset = circ - (anim / 100) * circ
+  
+  return (
+    <div className="ring-container">
+      <svg width="140" height="140" viewBox="0 0 140 140">
+        <circle cx="70" cy="70" r={r} fill="none"
+          stroke="#f1f5f9" strokeWidth="10" />
+        <circle cx="70" cy="70" r={r} fill="none"
+          stroke={color} strokeWidth="10"
+          strokeDasharray={circ}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          transform="rotate(-90 70 70)"
+          style={{ transition: 'stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1)' }} />
+        <text x="70" y="74" textAnchor="middle"
+          fontSize="22" fontWeight="700"
+          fontFamily="var(--font-mono)"
+          fill={color}>{pct}%</text>
+        <text x="70" y="92" textAnchor="middle"
+          fontSize="11" fill="var(--muted)" fontWeight="600" textTransform="uppercase" letterSpacing="0.05em">Risk</text>
+      </svg>
+    </div>
+  )
+}
 
 export default function ResultCard({ result, error, loading }) {
 
   if (loading) return (
     <div className="result-card center">
       <div className="skeleton-bars">
-        <div className="skeleton-bar" style={{ width: '60%' }}></div>
-        <div className="skeleton-bar" style={{ width: '40%' }}></div>
+        <div className="skeleton-bar" style={{ width: '40%', height: '140px', margin: '0 auto', borderRadius: '50%' }}></div>
         <div className="skeleton-bar" style={{ width: '80%' }}></div>
+        <div className="skeleton-bar" style={{ width: '60%' }}></div>
       </div>
     </div>
   )
@@ -21,24 +57,19 @@ export default function ResultCard({ result, error, loading }) {
   if (!result) return (
     <div className="result-card center">
       <p className="empty-label">
-        No prediction yet.<br />
-        Complete the form and click Predict Churn.
+        Waiting for pipeline.<br />
+        Complete the wizard and analyze.
       </p>
     </div>
   )
 
-  const { churn_probability, churn_prediction, risk_level, model_used, threshold_used, top_reasons } = result
+  const { churn_probability, churn_prediction, risk_level, model_used, top_reasons } = result
 
-  const badgeStyles = {
-    High: { background: 'rgba(218,54,51,0.12)', color: '#f47067', border: '1px solid rgba(218,54,51,0.25)' },
-    Medium: { background: 'rgba(176,140,26,0.12)', color: '#d4a72c', border: '1px solid rgba(176,140,26,0.25)' },
-    Low: { background: 'rgba(46,160,67,0.12)', color: '#3fb950', border: '1px solid rgba(46,160,67,0.25)' }
-  }[risk_level]
-
-  const gaugeColor = {
-    High: 'var(--danger)',
-    Medium: 'var(--warning)',
-    Low: 'var(--success)'
+  // Mapping RetainIQ SVG colors
+  const ringColor = {
+    High: 'var(--danger)',   /* #EF4444 */
+    Medium: 'var(--warning)', /* #F59E0B */
+    Low: 'var(--success)'    /* #22C55E */
   }[risk_level]
 
   const pct = Math.round(churn_probability * 100)
@@ -50,37 +81,10 @@ export default function ResultCard({ result, error, loading }) {
     <div className="result-card">
       <div className="result-content">
         
-        {/* Interactive Data Art based on prediction */}
-        <div className={`result-visualizer ${churn_prediction ? 'churned' : 'stayed'}`}>
-          <div className="visualizer-mesh"></div>
-        </div>
-
-        <div className="risk-badge" style={badgeStyles}>
-          {risk_level} Risk
-        </div>
+        <RiskRing pct={pct} color={ringColor} />
 
         <div>
-          <div className="gauge-label">
-            <span>Churn Probability</span>
-            <span className="gauge-pct">{pct}%</span>
-          </div>
-          <div className="gauge-track">
-            <div className="gauge-fill" style={{ width: `${pct}%`, background: gaugeColor }}></div>
-          </div>
-          <div className="gauge-meta">
-            Threshold: {Math.round(threshold_used * 100)}% · {churn_prediction ? 'Will Churn' : 'Will Stay'}
-          </div>
-        </div>
-
-        <div className="verdict-row">
-          <span style={{ fontSize: '12px', color: 'var(--muted)' }}>Prediction</span>
-          <span style={{ fontSize: '13px', fontWeight: '600', color: churn_prediction ? 'var(--danger)' : 'var(--success)' }}>
-            {churn_prediction ? 'WILL CHURN' : 'WILL STAY'}
-          </span>
-        </div>
-
-        <div>
-          <h3 className="reasons-title">Top Reasons</h3>
+          <h3 className="reasons-title">Top Risk Drivers (SHAP)</h3>
           {top_reasons.map((r, i) => {
             const barWidth = `${(Math.abs(r.effect) / maxEffect) * 100}%`
             const isRiskInc = r.direction === 'increases risk'
@@ -106,7 +110,7 @@ export default function ResultCard({ result, error, loading }) {
 
       </div>
       <div className="result-footer">
-        {model_used}
+        {model_used} Engine
       </div>
     </div>
   )

@@ -1,22 +1,24 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* Premium Light Theme */
-  --bg:        #f8fafc; /* Slate 50 */
-  --surface:   #ffffff;
-  --surface-2: #f1f5f9; /* Slate 100 */
-  --border:    #e2e8f0; /* Slate 200 */
-  --border-2:  #cbd5e1; /* Slate 300 */
-  --accent:    #4f46e5; /* Deep Indigo */
-  --accent-hover: #4338ca;
-  --success:   #059669; /* Emerald */
-  --success-bg: #d1fae5;
-  --warning:   #d97706; /* Amber */
-  --warning-bg: #fef3c7;
-  --danger:    #dc2626; /* Crimson */
+  /* RetainIQ Brand System */
+  --bg:        #0F172A; /* Muted Dark Navy */
+  --surface:   #FFFFFF; /* White Cards */
+  --surface-2: #F8FAFC; /* Slate 50 */
+  --border:    #E2E8F0; /* Slate 200 */
+  --border-2:  #CBD5E1; /* Slate 300 */
+  --accent:    #6366F1; /* Indigo Accent */
+  --accent-hover: #4F46E5;
+  --success:   #22C55E; /* Modern Green */
+  --success-bg:#dcfce7;
+  --warning:   #F59E0B; /* Amber */
+  --warning-bg:#fef3c7;
+  --danger:    #EF4444; /* Vivid Red */
   --danger-bg: #fee2e2;
-  --text:      #0f172a; /* Slate 900 */
-  --muted:     #64748b; /* Slate 500 */
+  
+  --text:      #0F172A; /* Slate 900 for internal card text */
+  --text-light:#FFFFFF; /* White for external app text on Navy */
+  --muted:     #64748B; /* Slate 500 */
   
   --font-body: 'Inter', sans-serif;
   --font-mono: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace;
@@ -30,7 +32,6 @@
 
 body {
   background: var(--bg);
-  color: var(--text);
   font-family: var(--font-body);
   font-size: 14px;
   line-height: 1.6;
