@@ -144,9 +144,9 @@ export default function DashboardView({ history, onClearHistory, onReloadEntry }
       <div className="chart-row">
         <div className="chart-card">
           <h3 className="chart-title">Churn Risk Trend (Last 20)</h3>
-          <div style={{ width: '100%', height: 200 }}>
+          <div style={{ width: '100%', height: 240 }}>
             <ResponsiveContainer>
-              <LineChart data={lineData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+              <LineChart data={lineData} margin={{ top: 20, right: 10, left: -20, bottom: 5 }}>
                 <XAxis dataKey="index" hide />
                 <YAxis domain={[0, 100]} tickFormatter={v => v + '%'} style={{ fontSize: '10px', fontFamily: 'var(--font-mono)' }} />
                 <Tooltip content={<CustomTooltip />} />
@@ -159,10 +159,10 @@ export default function DashboardView({ history, onClearHistory, onReloadEntry }
 
         <div className="chart-card">
           <h3 className="chart-title">Risk Distribution</h3>
-          <div style={{ width: '100%', height: 200 }}>
+          <div style={{ width: '100%', height: 260 }}>
             <ResponsiveContainer>
-              <PieChart>
-                <Pie data={pieData} cx="50%" cy="45%" innerRadius={55} outerRadius={85} dataKey="value" stroke="var(--border)" strokeWidth={2} isAnimationActive={false}>
+              <PieChart margin={{ top: 10 }}>
+                <Pie data={pieData} cx="50%" cy="50%" innerRadius={55} outerRadius={85} dataKey="value" stroke="var(--border)" strokeWidth={2} isAnimationActive={false}>
                   {pieData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}

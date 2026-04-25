@@ -100,9 +100,12 @@
 
 .reason-feature {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .reason-bar-track {
@@ -211,40 +214,186 @@
   transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.action-btn:hover {
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0px 0px var(--border);
+/* Risk Ring Improvements */
+.risk-ring-container {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  margin: 0 auto 1.5rem;
+}
+
+.risk-ring-svg {
+  width: 100%;
+  height: 100%;
+  transform: scale(1.1);
+}
+
+.risk-ring-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.risk-pct {
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--text);
+  line-height: 1;
+}
+
+.risk-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* Redesigned Simulator */
+.simulator-card {
+  background: var(--surface);
+  border: 4px solid var(--border);
+  box-shadow: 6px 6px 0 var(--border);
+  padding: 1.25rem;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.sim-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+}
+
+.sim-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sim-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sim-field-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.sim-toggle-group {
+  display: flex;
   background: var(--surface-2);
+  border: 2px solid var(--border);
+  padding: 2px;
+  gap: 2px;
+}
+
+.sim-toggle-btn {
+  flex: 1;
+  padding: 0.5rem 0.25rem;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--muted);
+}
+
+.sim-toggle-btn.active {
+  background: var(--text);
+  color: var(--surface);
+}
+
+.sim-result-box {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 2px dashed var(--surface-2);
+}
+
+.sim-comparison {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.sim-node {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.sim-node-tag {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.sim-node-val {
+  font-size: 20px;
+  font-weight: 900;
   color: var(--text);
 }
 
-.sim-slider {
-  -webkit-appearance: none;
-  width: 100%;
-  height: 3px;
-  background: var(--border);
-  outline: none;
-  margin: 0.5rem 0;
+.sim-node-val.success { color: var(--success); }
+.sim-node-val.danger { color: var(--danger); }
+
+.sim-node-bridge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  justify-content: center;
 }
 
-.sim-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 14px;
-  height: 14px;
-  background: var(--text);
-  cursor: pointer;
-  border-radius: 0;
+.sim-line {
+  height: 2px;
+  background: var(--surface-2);
+  flex: 1;
 }
 
-.sim-slider::-moz-range-thumb {
-  width: 14px;
-  height: 14px;
-  background: var(--text);
-  cursor: pointer;
-  border: none;
-  border-radius: 0;
+.sim-pulse-icon {
+  color: var(--border);
+  animation: sim-pulse 2s infinite;
 }
+
+@keyframes sim-pulse {
+  0% { opacity: 0.3; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 0.3; transform: scale(0.9); }
+}
+
+.sim-status-banner {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 0.5rem;
+  text-align: center;
+  border: 2px solid var(--border);
+}
+
+.sim-status-banner.success { background: var(--success-bg); color: var(--success); border-color: var(--success); }
+.sim-status-banner.danger { background: var(--danger-bg); color: var(--danger); border-color: var(--danger); }
 
 .sim-pulsing {
   animation: pulse-op 1s infinite alternate;
