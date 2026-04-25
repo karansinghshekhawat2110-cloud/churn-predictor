@@ -25,22 +25,31 @@ const FEATURE_DOCS = {
 }
 
 const RiskRing = ({ pct, color }) => {
-  const r = 45
+  const r = 48
   const circ = 2 * Math.PI * r
   const offset = circ - (pct / 100) * circ
 
   return (
     <div className="risk-ring-container">
       <svg className="risk-ring-svg" viewBox="0 0 120 120">
-        <circle className="ring-bg" cx="60" cy="60" r={r} />
+        <circle 
+          className="ring-bg" 
+          cx="60" cy="60" r={r} 
+          fill="none" 
+          stroke="var(--surface-2)" 
+          strokeWidth="10"
+        />
         <motion.circle 
           className="ring-fill" 
           cx="60" cy="60" r={r}
+          fill="none"
+          strokeWidth="10"
+          strokeLinecap="round"
           initial={{ strokeDashoffset: circ }}
           animate={{ strokeDashoffset: offset }}
-          transition={{ duration: 1.2, ease: "easeOut" }}
+          transition={{ duration: 1.2, ease: [0.34, 1.56, 0.64, 1] }}
           stroke={color}
-          style={{ strokeDasharray: circ }}
+          style={{ strokeDasharray: circ, transform: 'rotate(-90deg)', transformOrigin: 'center' }}
         />
       </svg>
       <div className="risk-ring-text">
@@ -68,47 +77,62 @@ function SimulatorPanel({ result, formData, simulatedResult, onSimulate }) {
   return (
     <div className="simulator-card">
       <div className="sim-header">
-        <Activity size={14} />
-        <span>Scenario Simulator</span>
+        <Zap size={14} fill="var(--text)" />
+        <span>Scenario Simulator (What-if?)</span>
       </div>
-      <div className="sim-grid">
+      
+      <div className="sim-controls">
         {features.map(f => (
-          <div key={f} className="sim-row">
-            <label>{f}</label>
-            <select 
-              value={simulatedResult ? simulatedResult.inputSnapshot?.[f] || formData[f] : formData[f]} 
-              onChange={(e) => handleChange(f, e.target.value)}
-            >
-              {options[f].map(o => <option key={o} value={o}>{o}</option>)}
-            </select>
+          <div key={f} className="sim-field">
+            <span className="sim-field-label">{f}</span>
+            <div className="sim-toggle-group">
+              {options[f].map(o => {
+                const current = simulatedResult ? simulatedResult.inputSnapshot?.[f] || formData[f] : formData[f]
+                const isActive = current === o
+                return (
+                  <button 
+                    key={o}
+                    className={`sim-toggle-btn ${isActive ? 'active' : ''}`}
+                    onClick={() => handleChange(f, o)}
+                  >
+                    {o.replace(' internet service', '')}
+                  </button>
+                )
+              })}
+            </div>
           </div>
         ))}
       </div>
       
       {simulatedResult && (
         <motion.div 
-          initial={{ opacity: 0, y: 5 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="sim-result"
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="sim-result-box"
         >
-          <div className="sim-compare">
-            <div className="sim-stat">
-              <span className="sim-label">Original</span>
-              <span className="sim-val">{Math.round(result.churn_probability * 100)}%</span>
+          <div className="sim-comparison">
+            <div className="sim-node">
+              <span className="sim-node-tag">Current</span>
+              <span className="sim-node-val">{Math.round(result.churn_probability * 100)}%</span>
             </div>
-            <div className="sim-arrow">→</div>
-            <div className="sim-stat">
-              <span className="sim-label">Simulated</span>
-              <span className="sim-val highlight" style={{ color: simulatedResult.churn_probability > result.churn_probability ? 'var(--danger)' : 'var(--success)' }}>
+            <div className="sim-node-bridge">
+              <div className="sim-line"></div>
+              <Activity size={12} className="sim-pulse-icon" />
+              <div className="sim-line"></div>
+            </div>
+            <div className="sim-node">
+              <span className="sim-node-tag">Simulated</span>
+              <span className={`sim-node-val ${simulatedResult.churn_probability < result.churn_probability ? 'success' : 'danger'}`}>
                 {Math.round(simulatedResult.churn_probability * 100)}%
               </span>
             </div>
           </div>
-          <p className="sim-hint">
-            {simulatedResult.churn_probability < result.churn_probability 
-              ? "✓ Change reduces risk significantly." 
-              : "⚠ This change might increase risk."}
-          </p>
+          
+          <div className={`sim-status-banner ${simulatedResult.churn_probability < result.churn_probability ? 'success' : 'danger'}`}>
+             {simulatedResult.churn_probability < result.churn_probability 
+               ? "✓ Retention Strategy Verified" 
+               : "⚠ Risk Exposure Increased"}
+          </div>
         </motion.div>
       )}
     </div>
