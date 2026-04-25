@@ -73,31 +73,40 @@
   letter-spacing: -0.01em;
 }
 
-.live-risk-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.3rem 0.6rem;
+.live-risk-indicator {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 140px;
+}
+.live-risk-bar-track {
+  height: 6px;
   background: var(--surface-2);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  overflow: hidden;
+}
+.live-risk-bar-fill {
+  height: 100%;
+}
+.live-risk-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+.live-risk-pct {
+  color: var(--muted);
+  font-weight: 400;
+  font-family: var(--font-mono);
+}
+.live-risk-hint {
   color: var(--muted);
   cursor: help;
-  transition: all 0.2s;
+  font-size: 11px;
 }
-
-.risk-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-}
-.risk-dot.High { background: var(--danger); box-shadow: 0 0 6px var(--danger); }
-.risk-dot.Medium { background: var(--warning); }
-.risk-dot.Low { background: var(--success); }
 
 /* Form Sections */
 .form-section {
@@ -349,4 +358,35 @@
 .reset-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+.risk-tag-inline {
+  font-size: 9px;
+  font-weight: 800;
+  background: var(--danger-bg);
+  color: var(--danger);
+  padding: 1px 4px;
+  text-transform: uppercase;
+}
+
+.risk-badge-mini {
+  font-size: 9px;
+  font-weight: 800;
+  margin-left: 4px;
+  background: var(--danger);
+  color: white;
+  padding: 1px 4px;
+  text-transform: uppercase;
+}
+
+.inline-error {
+  font-size: 11px;
+  color: var(--danger);
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+.retainiq-input.err {
+  border-color: var(--danger);
+  box-shadow: 2px 2px 0px 0px var(--danger);
 }

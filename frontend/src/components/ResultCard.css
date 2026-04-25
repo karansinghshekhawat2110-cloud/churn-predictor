@@ -218,6 +218,129 @@
   color: var(--text);
 }
 
+.sim-slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 3px;
+  background: var(--border);
+  outline: none;
+  margin: 0.5rem 0;
+}
+
+.sim-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--text);
+  cursor: pointer;
+  border-radius: 0;
+}
+
+.sim-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: var(--text);
+  cursor: pointer;
+  border: none;
+  border-radius: 0;
+}
+
+.sim-pulsing {
+  animation: pulse-op 1s infinite alternate;
+}
+
+@keyframes pulse-op {
+  0% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+.shap-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: var(--text);
+  color: var(--surface);
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--border);
+  box-shadow: 4px 4px 0 var(--border);
+  pointer-events: none;
+}
+
+.shap-tooltip-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.35rem;
+  opacity: 0.7;
+}
+
+.shap-tooltip-body {
+  font-size: 12px;
+  line-height: 1.6;
+  margin-bottom: 0.5rem;
+}
+
+.shap-tooltip-effect {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.strategy-gen-btn {
+  width: 100%;
+  background: var(--text);
+  color: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 0;
+  padding: 0.75rem;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 800;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 4px 4px 0px 0px var(--border);
+}
+
+.strategy-gen-btn:hover:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px 0px var(--border);
+}
+
+.strategy-gen-btn:disabled {
+  background: var(--surface-2);
+  color: var(--muted);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.strategy-box {
+  background: var(--surface-2);
+  border: 2px solid var(--border);
+  box-shadow: 3px 3px 0 var(--border);
+  padding: 1.25rem;
+  margin-top: 1rem;
+}
+
+.strategy-sec-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 0.5rem;
+  font-weight: 800;
+}
+
+.strategy-sec-body {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.7;
+}
+
 @media print {
   .form-card, .header, .cold-start-banner, .result-actions { display: none !important; }
   .result-card { border: none; padding: 0; }

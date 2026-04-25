@@ -27,6 +27,23 @@
   padding: 0; 
 }
 
+.main {
+  flex: 1;
+  padding: 2rem 5%;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.main > * { 
+  animation: fadeIn 0.2s ease; 
+}
+
+@keyframes fadeIn { 
+  from { opacity: 0; transform: translateY(6px); } 
+  to { opacity: 1; transform: none; } 
+}
+
 body {
   background-color: var(--bg);
   background-image: radial-gradient(circle, #000000 2px, transparent 2px);
@@ -39,6 +56,36 @@ body {
   min-height: 100vh;
 }
 
+.cold-start-banner {
+  background: var(--warning-bg);
+  color: var(--warning);
+  padding: 0.5rem 1rem;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  text-align: center;
+  border-bottom: 2px solid var(--border);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cold-start-banner::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: var(--warning);
+  border-radius: 50%;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+}
+
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   letter-spacing: -0.02em;
@@ -49,10 +96,130 @@ h1, h2, h3, h4, h5, h6 {
   stroke-width: 3px;
 }
 
+.tab-btn:hover { background: var(--bg); }
+
+.tab-btn.active {
+  background: var(--text);
+  color: var(--surface);
+  letter-spacing: 0.02em;
+  transform: translateY(-1px);
+}
+
+.shortcut-hint-desktop {
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+@media (max-width: 768px) {
+  .shortcut-hint-desktop { display: none; }
+}
+
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: var(--bg); border-left: 2px solid var(--border); }
 ::-webkit-scrollbar-thumb { background: #000; border: 2px solid var(--bg); }
 
 input, select, button {
   font-family: inherit;
+}
+
+/* ResultCard Shimmer Improvement */
+.skeleton {
+  background: var(--surface);
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent 25%, rgba(0,0,0,0.05) 50%, transparent 75%);
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(50%); }
+}
+
+.skeleton-ring-outer {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 10px solid var(--surface-2);
+  margin: 0 auto 1.5rem;
+}
+
+.skeleton-line {
+  background: var(--surface-2);
+  border-radius: 4px;
+}
+
+.skeleton-bar-row {
+  height: 12px;
+  background: var(--surface-2);
+  margin-bottom: 0.8rem;
+  width: 100%;
+}
+
+/* Accessibility */
+:focus-visible { 
+  outline: 2px solid var(--text); 
+  outline-offset: 2px; 
+}
+:focus:not(:focus-visible) { 
+  outline: none; 
+}
+
+/* Print Styles */
+@media print {
+  .header-tabs, .cold-start-banner, .wizard-footer, .action-btn, .header-right, .prediction-history-sidebar { 
+    display: none !important; 
+  }
+  .result-card { 
+    border: 2px solid #000; 
+    box-shadow: none !important;
+  }
+  body { 
+    background: white !important; 
+    background-image: none !important; 
+  }
+  .app { background: white !important; }
+}
+
+/* Specific component shadows overrides */
+.form-card, .result-card, .dashboard-card, .bulk-upload-card, .metrics-panel {
+  box-shadow: 6px 6px 0 var(--border) !important;
+}
+
+.cold-start-banner {
+  /* ... existing from previous edit ... */
+}
+
+/* Pulse for the emoji in cold-start */
+.cold-start-banner::first-letter {
+  display: inline-block;
+  animation: emoji-pulse 2s infinite ease-in-out;
+}
+
+@keyframes emoji-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.predict-btn:hover:not(:disabled) {
+  transform: translate(-2px, -2px) !important;
+  box-shadow: 4px 4px 0 var(--border) !important;
+}
+
+.predict-btn:active:not(:disabled) {
+  transform: translate(0, 0) !important;
+  box-shadow: none !important;
 }

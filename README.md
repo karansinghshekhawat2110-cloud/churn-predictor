@@ -105,6 +105,20 @@ Open `http://localhost:5173`
 
 ---
 
+## ⌨️ Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `⌘ + Enter` | Run Churn Prediction (Single mode) |
+| `Escape` | Close Model Metrics / Panels |
+| `⌘ + 1` | Switch to Prediction Engine |
+| `⌘ + 2` | Switch to Batch Analysis |
+| `⌘ + 3` | Switch to History Dashboard |
+
+---
+
+---
+
 ## 📊 Features Engineered
 
 | Feature | Description |

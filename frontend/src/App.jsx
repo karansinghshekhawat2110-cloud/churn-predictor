@@ -3,17 +3,23 @@ import { Toaster, toast } from 'react-hot-toast'
 import CustomerForm from './components/CustomerForm'
 import ResultCard from './components/ResultCard'
 import BulkUploadView from './components/BulkUploadView'
-import PredictionHistory from './components/PredictionHistory'
+import DashboardView from './components/DashboardView'
+import ModelMetricsPanel from './components/ModelMetricsPanel'
+import { useHistory } from './hooks/useHistory'
 import './App.css'
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('single')
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [formData, setFormData] = useState(null)
   
+  const [simulatedResult, setSimulatedResult] = useState(null)
+  const [isMetricsPanelOpen, setIsMetricsPanelOpen] = useState(false)
   const [apiWarm, setApiWarm] = useState(false)
   const [modelStats, setModelStats] = useState(null)
-  const [history, setHistory] = useState([])
+  
+  const { history, saveEntry, clearHistory } = useHistory()
 
   useEffect(() => {
     fetch('https://churn-predictor-api-zigm.onrender.com/health')
@@ -23,11 +29,32 @@ export default function App() {
         setApiWarm(true)
       })
       .catch(() => setApiWarm(true))
-  }, [])
 
-  const handlePredict = async (formData) => {
+    const handleKeyDown = (e) => {
+      // Cmd/Ctrl + Enter to trigger predict
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        const predictBtn = document.querySelector('.predict-btn')
+        if (predictBtn && activeTab === 'single') predictBtn.click()
+      }
+      // Esc to close metrics
+      if (e.key === 'Escape') {
+        setIsMetricsPanelOpen(false)
+      }
+      // Tabs
+      if ((e.metaKey || e.ctrlKey) && e.key === '1') setActiveTab('single')
+      if ((e.metaKey || e.ctrlKey) && e.key === '2') setActiveTab('bulk')
+      if ((e.metaKey || e.ctrlKey) && e.key === '3') setActiveTab('dashboard')
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [activeTab])
+
+  const handlePredict = async (submitData) => {
     setLoading(true)
     setResult(null)
+    setSimulatedResult(null)
+    setFormData(submitData)
 
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 60000)
@@ -36,7 +63,7 @@ export default function App() {
       const response = await fetch('https://churn-predictor-api-zigm.onrender.com/predict', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(submitData),
         signal: controller.signal
       })
       clearTimeout(timeoutId)
@@ -48,7 +75,7 @@ export default function App() {
 
       const data = await response.json()
       setResult(data)
-      setHistory(prev => [{...data, timestamp: new Date().toLocaleTimeString()}, ...prev].slice(0, 5))
+      saveEntry(data, submitData)
     } catch (err) {
       clearTimeout(timeoutId)
       if (err.name === 'AbortError') {
@@ -59,6 +86,34 @@ export default function App() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const onSimulate = async (modifiedFormData) => {
+    try {
+      const response = await fetch('https://churn-predictor-api-zigm.onrender.com/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(modifiedFormData)
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setSimulatedResult(data)
+      }
+    } catch (err) {
+      console.warn("Simulator API error:", err)
+    }
+  }
+
+  const handleReloadEntry = (entry) => {
+    setFormData(entry.formSnapshot)
+    setResult({
+      churn_probability: entry.probability,
+      risk_level: entry.riskLevel,
+      churn_prediction: entry.churnPrediction,
+      top_reasons: [{ feature: entry.topFeature, effect: 0, direction: 'unknown' }] // mock minimal
+    })
+    setSimulatedResult(null)
+    setActiveTab('single')
   }
 
   return (
@@ -79,11 +134,31 @@ export default function App() {
           <h1>RetainIQ</h1>
           <div className="header-right">
             {modelStats ? (
-              <>
-                <span className="stat-chip">{modelStats.model}</span>
-                <span className="stat-chip">ROC-AUC {modelStats.test_roc_auc}</span>
-                <span className="stat-chip">Threshold {modelStats.threshold}</span>
-              </>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <span 
+                    className={`stat-chip clickable ${isMetricsPanelOpen ? 'active' : ''}`} 
+                    onClick={() => setIsMetricsPanelOpen(!isMetricsPanelOpen)}
+                  >
+                    {modelStats.model}
+                  </span>
+                  <span 
+                    className={`stat-chip clickable ${isMetricsPanelOpen ? 'active' : ''}`}
+                    onClick={() => setIsMetricsPanelOpen(!isMetricsPanelOpen)}
+                  >
+                    ROC-AUC {modelStats.test_roc_auc}
+                  </span>
+                  <span 
+                    className={`stat-chip clickable ${isMetricsPanelOpen ? 'active' : ''}`}
+                    onClick={() => setIsMetricsPanelOpen(!isMetricsPanelOpen)}
+                  >
+                    Threshold {modelStats.threshold}
+                  </span>
+                </div>
+                <span className="shortcut-hint-desktop">
+                  ⌘+Enter to predict · ⌘1/2/3 switch tabs
+                </span>
+              </div>
             ) : (
               <span className="stat-chip muted">Loading model info...</span>
             )}
@@ -102,28 +177,49 @@ export default function App() {
           >
             Batch Analysis
           </button>
+          <button 
+            className={`tab-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
+            onClick={() => setActiveTab('dashboard')}
+          >
+            Dashboard {history.length > 0 && `(${history.length})`}
+          </button>
         </div>
       </header>
+
+      <ModelMetricsPanel 
+        isOpen={isMetricsPanelOpen} 
+        onClose={() => setIsMetricsPanelOpen(false)} 
+      />
       
       {!apiWarm && (
         <div className="cold-start-banner">
-          ⏳ Server is waking up — first prediction may take 30–60 seconds on free tier.
+          ⏳ Server waking up...
         </div>
       )}
 
       <main className="main">
-        {activeTab === 'single' ? (
-          <>
-            <div className="grid-layout">
-              <CustomerForm onPredict={handlePredict} loading={loading} />
-              <div className="result-container-flex">
-                 <ResultCard result={result} loading={loading} />
-              </div>
+        {activeTab === 'single' && (
+          <div className="grid-layout">
+            <CustomerForm onPredict={handlePredict} loading={loading} externalData={formData} />
+            <div className="result-container-flex">
+               <ResultCard 
+                 result={result} 
+                 loading={loading} 
+                 formData={formData} 
+                 simulatedResult={simulatedResult} 
+                 onSimulate={onSimulate} 
+                 testRocAuc={modelStats?.test_roc_auc}
+               />
             </div>
-            <PredictionHistory history={history} />
-          </>
-        ) : (
-          <BulkUploadView />
+          </div>
+        )}
+        {activeTab === 'bulk' && <BulkUploadView />}
+        {activeTab === 'dashboard' && (
+          <DashboardView 
+            history={history} 
+            onClearHistory={clearHistory} 
+            onReloadEntry={handleReloadEntry} 
+          />
         )}
       </main>
     </div>
