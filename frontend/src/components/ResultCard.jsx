@@ -76,9 +76,189 @@ const RiskRing = ({ pct, color }) => {
   )
 }
 
-export default function ResultCard({ result, loading }) {
+const SimulatorPanel = ({ result, formData, simulatedResult, onSimulate }) => {
+  const [simForm, setSimForm] = useState(formData ? { ...formData } : null)
+
+  useEffect(() => {
+    if (simForm && JSON.stringify(simForm) !== JSON.stringify(formData)) {
+      const t = setTimeout(() => {
+        onSimulate({ ...formData, ...simForm })
+      }, 400)
+      return () => clearTimeout(t)
+    }
+  }, [simForm, formData, onSimulate])
+
+  if (!result || !result.churn_prediction || !formData) return null
+
+  const simFeatures = result.top_reasons.filter(r => r.direction === 'increases risk')
+  if (simFeatures.length === 0) return null
+
+  // Ensure rings correctly compute
+  const origPct = Math.round(result.churn_probability * 100)
+  const simPct = simulatedResult ? Math.round(simulatedResult.churn_probability * 100) : null
+  const diff = simPct !== null ? simPct - origPct : null
+
+  // Render logic bounds
+  const getRingColor = (pct) => {
+    if (pct === null) return 'var(--muted)'
+    if (pct >= 50) return 'var(--danger)'
+    if (pct >= 37) return 'var(--warning)'
+    return 'var(--success)'
+  }
+
+  const handleChange = (e, key, parser) => {
+    const val = parser ? parser(e.target.value) : e.target.value
+    setSimForm(prev => ({ ...prev, [key]: val }))
+  }
+
+  return (
+    <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '2px solid var(--border)' }}>
+      <h4 style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '1rem', fontWeight: 800 }}>
+        Intervention Simulator
+      </h4>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1rem', background: 'var(--surface-2)', border: '2px solid var(--border)' }}>
+        
+        {/* Controls Block */}
+        {simFeatures.map(f => {
+          if (f.feature === 'tenure') {
+            return (
+              <div key="tenure" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 700 }}>
+                  <label>Tenure</label>
+                  <span>{simForm.tenure} months</span>
+                </div>
+                <input 
+                  type="range" min="0" max="72" step="1" 
+                  value={simForm.tenure} 
+                  onChange={e => handleChange(e, 'tenure', parseInt)}
+                  className="sim-slider" 
+                />
+              </div>
+            )
+          }
+          if (f.feature === 'MonthlyCharges') {
+            return (
+              <div key="monthly" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 700 }}>
+                  <label>Monthly Charges</label>
+                  <span>${simForm.MonthlyCharges}</span>
+                </div>
+                <input 
+                  type="range" min="18" max="120" step="0.5" 
+                  value={simForm.MonthlyCharges} 
+                  onChange={e => handleChange(e, 'MonthlyCharges', parseFloat)}
+                  className="sim-slider" 
+                />
+              </div>
+            )
+          }
+          if (f.feature === 'Contract') {
+            return (
+              <div key="contract" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <label style={{ fontSize: '12px', fontWeight: 700 }}>Contract Type</label>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  {['Month-to-month', 'One year', 'Two year'].map(c => (
+                    <button 
+                      key={c}
+                      className={`pill-btn ${simForm.Contract === c ? 'active' : ''}`}
+                      onClick={() => setSimForm(prev => ({...prev, Contract: c}))}
+                      style={{ padding: '0.3rem 0.5rem', fontSize: '11px', flex: 1 }}
+                    >
+                      {c.split('-')[0]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )
+          }
+          return null
+        })}
+
+        {/* Results Graph Block */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2rem', marginTop: '1rem' }}>
+           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+             <RiskRing pct={origPct} color={getRingColor(origPct)} />
+             <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--muted)', letterSpacing: '0.05em' }}>CURRENT</span>
+           </div>
+           
+           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }} className={simPct === null && JSON.stringify(simForm) !== JSON.stringify(formData) ? 'sim-pulsing' : ''}>
+             <RiskRing pct={simPct || origPct} color={simPct ? getRingColor(simPct) : 'var(--border)'} />
+             <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text)', letterSpacing: '0.05em' }}>SIMULATED</span>
+           </div>
+        </div>
+        
+        {diff !== null && diff !== 0 && (
+          <div style={{ 
+            background: diff < 0 ? 'var(--success)' : 'var(--danger)',
+            color: diff < 0 ? '#000' : '#fff',
+            border: '2px solid var(--border)',
+            padding: '0.5rem',
+            textAlign: 'center',
+            fontSize: '12px',
+            fontWeight: 800,
+            textTransform: 'uppercase',
+            fontFamily: 'var(--font-mono)'
+          }}>
+            {diff < 0 ? `▼ ${Math.abs(diff)} pts safer` : `▲ ${Math.abs(diff)} pts riskier`}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export default function ResultCard({ result, loading, formData, simulatedResult, onSimulate }) {
 
   const [barsMounted, setBarsMounted] = useState(false)
+  const [strategy, setStrategy] = useState(null)
+  const [strategyLoading, setStrategyLoading] = useState(false)
+  const [cooldown, setCooldown] = useState(0)
+
+  // Cooldown timer
+  useEffect(() => {
+    if (cooldown > 0) {
+      const t = setInterval(() => setCooldown(v => v - 1), 1000)
+      return () => clearInterval(t)
+    }
+  }, [cooldown])
+
+  // Reset strategy when result changes
+  useEffect(() => {
+    setStrategy(null)
+    setCooldown(0)
+  }, [result])
+
+  const handleGenerateStrategy = async () => {
+    setStrategyLoading(true)
+    try {
+      const response = await fetch('https://churn-predictor-api-zigm.onrender.com/generate_strategy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer: formData,
+          churn_probability: result.churn_probability,
+          risk_level: result.risk_level,
+          top_reasons: result.top_reasons
+        })
+      })
+      const data = await response.json()
+      setStrategy(data.strategy)
+      setCooldown(20)
+    } catch (err) {
+      setStrategy("⚠️ Strategy generation failed. Please check your GROQ_API_KEY.")
+    } finally {
+      setStrategyLoading(false)
+    }
+  }
+
+  const handleCopyStrategy = () => {
+    if (!strategy) return
+    navigator.clipboard.writeText(strategy)
+    const btn = document.getElementById('copy-strat-btn')
+    const orig = btn.innerText
+    btn.innerText = "Copied ✓"
+    setTimeout(() => btn.innerText = orig, 2000)
+  }
 
   // Trigger SHAP bars after short mount delay
   useEffect(() => {
@@ -165,6 +345,13 @@ Model: ${model_used}`
             <button className="action-btn" onClick={handleCopy}>Copy Result</button>
             <button className="action-btn" onClick={handlePrint}>Print / Save PDF</button>
           </div>
+          
+          <SimulatorPanel 
+            result={result} 
+            formData={formData} 
+            simulatedResult={simulatedResult} 
+            onSimulate={onSimulate} 
+          />
 
           <div>
             <h3 className="reasons-title">Top Risk Drivers (SHAP)</h3>
@@ -219,6 +406,39 @@ Model: ${model_used}`
                 })}
               </div>
             </motion.div>
+          )}
+
+          {churn_prediction && (
+            <div style={{ marginTop: '1rem' }}>
+              {!strategy ? (
+                <button 
+                  className="strategy-gen-btn"
+                  disabled={strategyLoading || cooldown > 0}
+                  onClick={handleGenerateStrategy}
+                >
+                  {strategyLoading ? "Generating..." : cooldown > 0 ? `Available in ${cooldown}s` : "✦ Generate Retention Strategy"}
+                </button>
+              ) : (
+                <div className="strategy-box">
+                  <div className="strategy-content">
+                    {strategy.split('## ').filter(s => s.trim()).map((section, idx) => {
+                      const [title, ...content] = section.split('\n');
+                      return (
+                        <div key={idx} style={{ marginBottom: '1rem' }}>
+                          <h5 className="strategy-sec-title">{title.trim()}</h5>
+                          <p className="strategy-sec-body">{content.join('\n').trim()}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                    <button id="copy-strat-btn" className="action-btn-sm" onClick={handleCopyStrategy}>
+                      Copy Strategy
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
 
         </div>

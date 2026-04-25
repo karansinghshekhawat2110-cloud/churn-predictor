@@ -211,3 +211,17 @@
   box-shadow: 2px 2px 0px 0px var(--border);
   padding: 0.2rem 0.5rem;
 }
+
+.stat-chip.clickable {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.stat-chip.clickable:hover {
+  background: var(--surface-2);
+}
+
+.stat-chip.active {
+  background: var(--text);
+  color: var(--surface);
+}
