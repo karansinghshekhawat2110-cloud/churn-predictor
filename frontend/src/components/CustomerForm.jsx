@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { Loader2 } from 'lucide-react'
 import './CustomerForm.css'
 
@@ -23,26 +23,44 @@ const defaultForm = {
   MonthlyCharges: 85.5
 }
 
-// User-provided hook for live frontend heuristic risk prediction
-const getLiveRisk = (form) => {
+function getLiveScore(form) {
   let score = 0
-  if (form.tenure < 12) score += 2
+  // High-weight factors (from SHAP analysis)
   if (form.Contract === 'Month-to-month') score += 3
-  if (form.InternetService === 'Fiber optic') score += 1
+  if (parseInt(form.tenure) < 12) score += 2.5
+  if (parseFloat(form.MonthlyCharges) > 75) score += 1.5
+  // Medium-weight factors
   if (form.PaymentMethod === 'Electronic check') score += 1
-  if (form.OnlineSecurity === 'No') score += 1
-  if (score >= 5) return 'High'
-  if (score >= 3) return 'Medium'
-  return 'Low'
+  if (form.InternetService === 'Fiber optic') score += 0.8
+  if (form.OnlineSecurity === 'No') score += 0.8
+  if (form.TechSupport === 'No') score += 0.7
+  // Low-weight factors
+  if (form.OnlineBackup === 'No') score += 0.3
+  if (form.DeviceProtection === 'No') score += 0.3
+  if (form.SeniorCitizen === 1 || form.SeniorCitizen === '1') score += 0.4
+  if (form.Partner === 'No') score += 0.3
+  if (form.Dependents === 'No') score += 0.3
+  return Math.min(score, 10)
+}
+
+function scoreToRisk(score) {
+  if (score >= 6) return { level: 'High', color: 'var(--danger)', approxPct: Math.round(50 + score * 5) }
+  if (score >= 3.5) return { level: 'Medium', color: 'var(--warning)', approxPct: Math.round(25 + score * 5) }
+  return { level: 'Low', color: 'var(--success)', approxPct: Math.round(score * 5) }
 }
 
 // Subcomponents
-const YesNoToggle = ({ label, value, onChange }) => (
+const YesNoToggle = ({ label, value, onChange, riskTag }) => (
   <div className="toggle-group">
-    <label>{label}</label>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+      <label>{label}</label>
+      {riskTag && <span className="risk-tag-inline">{riskTag}</span>}
+    </div>
     <button 
       type="button" 
       className={`toggle-track ${value === 'Yes' || value == 1 ? 'active' : ''}`}
+      aria-label={`${label}: ${value}`}
+      aria-pressed={value === 'Yes' || value == 1}
       onClick={() => onChange(value === 'Yes' ? 'No' : (value == 1 ? 0 : (value === 'No' ? 'Yes' : 1)))}
     >
       <div className="toggle-thumb" />
@@ -50,52 +68,99 @@ const YesNoToggle = ({ label, value, onChange }) => (
   </div>
 )
 
-const PillSelector = ({ label, options, value, onChange }) => (
+const PillSelector = ({ label, options, value, onChange, riskMap = {}, firstRef }) => (
   <div className="pill-group">
     <label>{label}</label>
     <div className="pill-container">
-      {options.map(opt => (
+      {options.map((opt, i) => (
         <button
           key={opt}
+          ref={i === 0 ? firstRef : null}
           type="button"
           className={`pill-btn ${value === opt ? 'active' : ''}`}
+          aria-label={`${label}: ${opt}`}
+          aria-pressed={value === opt}
           onClick={() => onChange(opt)}
         >
           {opt}
+          {riskMap[opt] && <span className="risk-badge-mini">{riskMap[opt]}</span>}
         </button>
       ))}
     </div>
   </div>
 )
 
-export default function CustomerForm({ onPredict, loading }) {
+export default function CustomerForm({ onPredict, loading, externalData }) {
   const [form, setForm] = useState(defaultForm)
   const [step, setStep] = useState(1)
+  const [errors, setErrors] = useState({})
+  const firstInputRef = useRef(null)
 
-  const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
+  // External data hook (from History/Simulator)
+  useEffect(() => {
+    if (externalData) {
+      setForm(externalData)
+    }
+  }, [externalData])
 
-  const liveRisk = useMemo(() => getLiveRisk(form), [form])
+  useEffect(() => {
+    // Focus first element on step change
+    firstInputRef.current?.focus()
+  }, [step])
 
-  const handleReset = () => setForm(defaultForm)
+  const set = (key, val) => {
+    setForm(f => ({ ...f, [key]: val }))
+    if (errors[key]) setErrors(prev => {
+      const n = { ...prev }
+      delete n[key]
+      return n
+    })
+  }
+
+  const liveScore = useMemo(() => getLiveScore(form), [form])
+  const liveRisk = useMemo(() => scoreToRisk(liveScore), [liveScore])
+
+  const handleReset = () => {
+    setForm(defaultForm)
+    setStep(1)
+    setErrors({})
+  }
+
+  const validateStep = () => {
+    if (step === 2) {
+      const newErrors = {}
+      const tenureValue = parseInt(form.tenure)
+      const mcValue = parseFloat(form.MonthlyCharges)
+
+      if (isNaN(tenureValue) || tenureValue < 0 || tenureValue > 72) {
+        newErrors.tenure = 'Tenure must be 0-72 months'
+      }
+      if (isNaN(mcValue) || mcValue <= 0) {
+        newErrors.MonthlyCharges = 'Charges must be greater than 0'
+      }
+
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors)
+        return false
+      }
+    }
+    return true
+  }
+
+  const handleNext = () => {
+    if (validateStep()) {
+      setStep(s => Math.min(3, s + 1))
+    }
+  }
 
   const handleSubmit = () => {
-    const charges = parseFloat(form.MonthlyCharges)
-    const tenure = parseInt(form.tenure)
-
-    if (isNaN(charges) || charges < 0) {
-      alert('Monthly Charges must be 0 or greater.')
-      return
-    }
-    if (isNaN(tenure) || tenure < 0 || tenure > 72) {
-      alert('Tenure must be between 0 and 72 months.')
-      return
-    }
+    if (!validateStep()) return
 
     onPredict({
       ...form,
       SeniorCitizen: parseInt(form.SeniorCitizen),
-      tenure: tenure,
-      MonthlyCharges: charges
+      tenure: parseInt(form.tenure),
+      MonthlyCharges: parseFloat(form.MonthlyCharges)
     })
   }
 
@@ -105,7 +170,6 @@ export default function CustomerForm({ onPredict, loading }) {
   return (
     <div className="form-card">
       
-      {/* 3 Dot Progress Layout */}
       <div className="wizard-progress">
         <div className="progress-line-active" style={{ width: `${progressWidth}%` }} />
         {[1,2,3].map(i => (
@@ -119,9 +183,23 @@ export default function CustomerForm({ onPredict, loading }) {
           {step === 2 && "Account Details"}
           {step === 3 && "Services & Add-ons"}
         </h2>
-        <div className="live-risk-pill" title="Rough estimate — click Predict for full analysis">
-          <div className={`risk-dot ${liveRisk}`}></div>
-          {liveRisk} Risk
+        
+        <div className="live-risk-indicator">
+          <div className="live-risk-bar-track">
+            <div 
+              className="live-risk-bar-fill"
+              style={{ 
+                width: `${(liveScore / 10) * 100}%`,
+                background: liveRisk.color,
+                transition: 'width 0.35s cubic-bezier(0.4, 0, 0.2, 1), background 0.35s ease'
+              }}
+            />
+          </div>
+          <div className="live-risk-label">
+            <span style={{ color: liveRisk.color, fontWeight: 800 }}>{liveRisk.level}</span>
+            <span className="live-risk-pct">~{liveRisk.approxPct}% est.</span>
+            <span className="live-risk-hint" title="Heuristic estimate only — run full analysis for accurate result">ⓘ</span>
+          </div>
         </div>
       </div>
 
@@ -133,6 +211,7 @@ export default function CustomerForm({ onPredict, loading }) {
                options={['Male', 'Female']} 
                value={form.gender} 
                onChange={v => set('gender', v)} 
+               firstRef={firstInputRef}
             />
             <YesNoToggle label="Senior Citizen" value={form.SeniorCitizen} onChange={v => set('SeniorCitizen', v)} />
             <YesNoToggle label="Has Partner" value={form.Partner} onChange={v => set('Partner', v)} />
@@ -143,27 +222,45 @@ export default function CustomerForm({ onPredict, loading }) {
         {step === 2 && (
           <div className="form-grid">
             <div className="field-wrapper">
-              <label>Tenure (months)</label>
+              <label htmlFor="tenure-input">Tenure (months)</label>
               <div className="input-wrapper suffix">
-                <input type="number" className="retainiq-input" min={0} max={72} value={form.tenure}
-                  onChange={e => set('tenure', e.target.value)} />
+                <input 
+                  id="tenure-input"
+                  ref={firstInputRef}
+                  type="number" 
+                  className={`retainiq-input ${errors.tenure ? 'err' : ''}`} 
+                  min={0} max={72} 
+                  value={form.tenure}
+                  aria-label="Tenure in months"
+                  onChange={e => set('tenure', e.target.value)} 
+                />
                 <span className="input-suffix">mo</span>
               </div>
+              {errors.tenure && <span className="inline-error">{errors.tenure}</span>}
             </div>
 
             <div className="field-wrapper">
-              <label>Monthly Charges</label>
+              <label htmlFor="charge-input">Monthly Charges</label>
               <div className="input-wrapper prefix">
                 <span className="input-prefix">$</span>
-                <input type="number" className="retainiq-input" step="0.01" min={0} value={form.MonthlyCharges}
-                  onChange={e => set('MonthlyCharges', e.target.value)} />
+                <input 
+                  id="charge-input"
+                  type="number" 
+                  className={`retainiq-input ${errors.MonthlyCharges ? 'err' : ''}`} 
+                  step="0.01" min={0} 
+                  value={form.MonthlyCharges}
+                  aria-label="Monthly Charges Amount"
+                  onChange={e => set('MonthlyCharges', e.target.value)} 
+                />
               </div>
+              {errors.MonthlyCharges && <span className="inline-error">{errors.MonthlyCharges}</span>}
             </div>
 
             <PillSelector 
                label="Contract Type" 
                options={['Month-to-month', 'One year', 'Two year']} 
                value={form.Contract} 
+               riskMap={{ 'Month-to-month': 'Highest risk' }}
                onChange={v => set('Contract', v)} 
             />
             
@@ -185,6 +282,7 @@ export default function CustomerForm({ onPredict, loading }) {
                options={['Fiber optic', 'DSL', 'No']} 
                value={form.InternetService} 
                onChange={v => set('InternetService', v)} 
+               firstRef={firstInputRef}
             />
 
             <PillSelector 
@@ -195,10 +293,20 @@ export default function CustomerForm({ onPredict, loading }) {
             />
 
             <YesNoToggle label="Phone Service" value={form.PhoneService} onChange={v => set('PhoneService', v)} />
-            <YesNoToggle label="Online Security" value={form.OnlineSecurity} onChange={v => set('OnlineSecurity', v)} />
+            <YesNoToggle 
+               label="Online Security" 
+               value={form.OnlineSecurity} 
+               riskTag={form.OnlineSecurity === 'No' ? '+Risk' : null}
+               onChange={v => set('OnlineSecurity', v)} 
+            />
             <YesNoToggle label="Online Backup" value={form.OnlineBackup} onChange={v => set('OnlineBackup', v)} />
             <YesNoToggle label="Device Protection" value={form.DeviceProtection} onChange={v => set('DeviceProtection', v)} />
-            <YesNoToggle label="Tech Support" value={form.TechSupport} onChange={v => set('TechSupport', v)} />
+            <YesNoToggle 
+               label="Tech Support" 
+               value={form.TechSupport} 
+               riskTag={form.TechSupport === 'No' ? '+Risk' : null}
+               onChange={v => set('TechSupport', v)} 
+            />
             <YesNoToggle label="Streaming TV" value={form.StreamingTV} onChange={v => set('StreamingTV', v)} />
             <YesNoToggle label="Streaming Movies" value={form.StreamingMovies} onChange={v => set('StreamingMovies', v)} />
           </div>
@@ -208,6 +316,7 @@ export default function CustomerForm({ onPredict, loading }) {
       <div className="wizard-footer">
         <button 
           className="btn-secondary" 
+          aria-label="Go to previous step"
           onClick={() => setStep(s => Math.max(1, s - 1))}
           disabled={step === 1 || loading}
         >
@@ -217,17 +326,19 @@ export default function CustomerForm({ onPredict, loading }) {
         {step < 3 ? (
           <button 
             className="btn-primary" 
-            onClick={() => setStep(s => Math.min(3, s + 1))}
+            aria-label="Go to next step"
+            onClick={handleNext}
           >
             Next Step
           </button>
         ) : (
           <div className="btn-row">
-            <button className="reset-btn" onClick={handleReset} disabled={loading}>
+            <button className="reset-btn" aria-label="Reset form data" onClick={handleReset} disabled={loading}>
               Reset
             </button>
             <button 
               className="btn-primary predict-btn" 
+              aria-label="Run churn prediction analysis"
               onClick={handleSubmit} 
               disabled={loading}
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}

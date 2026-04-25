@@ -29,7 +29,26 @@ export default function App() {
         setApiWarm(true)
       })
       .catch(() => setApiWarm(true))
-  }, [])
+
+    const handleKeyDown = (e) => {
+      // Cmd/Ctrl + Enter to trigger predict
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        const predictBtn = document.querySelector('.predict-btn')
+        if (predictBtn && activeTab === 'single') predictBtn.click()
+      }
+      // Esc to close metrics
+      if (e.key === 'Escape') {
+        setIsMetricsPanelOpen(false)
+      }
+      // Tabs
+      if ((e.metaKey || e.ctrlKey) && e.key === '1') setActiveTab('single')
+      if ((e.metaKey || e.ctrlKey) && e.key === '2') setActiveTab('bulk')
+      if ((e.metaKey || e.ctrlKey) && e.key === '3') setActiveTab('dashboard')
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [activeTab])
 
   const handlePredict = async (submitData) => {
     setLoading(true)
@@ -115,26 +134,31 @@ export default function App() {
           <h1>RetainIQ</h1>
           <div className="header-right">
             {modelStats ? (
-              <>
-                <span 
-                  className={`stat-chip clickable ${isMetricsPanelOpen ? 'active' : ''}`} 
-                  onClick={() => setIsMetricsPanelOpen(!isMetricsPanelOpen)}
-                >
-                  {modelStats.model}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <span 
+                    className={`stat-chip clickable ${isMetricsPanelOpen ? 'active' : ''}`} 
+                    onClick={() => setIsMetricsPanelOpen(!isMetricsPanelOpen)}
+                  >
+                    {modelStats.model}
+                  </span>
+                  <span 
+                    className={`stat-chip clickable ${isMetricsPanelOpen ? 'active' : ''}`}
+                    onClick={() => setIsMetricsPanelOpen(!isMetricsPanelOpen)}
+                  >
+                    ROC-AUC {modelStats.test_roc_auc}
+                  </span>
+                  <span 
+                    className={`stat-chip clickable ${isMetricsPanelOpen ? 'active' : ''}`}
+                    onClick={() => setIsMetricsPanelOpen(!isMetricsPanelOpen)}
+                  >
+                    Threshold {modelStats.threshold}
+                  </span>
+                </div>
+                <span className="shortcut-hint-desktop">
+                  ⌘+Enter to predict · ⌘1/2/3 switch tabs
                 </span>
-                <span 
-                  className={`stat-chip clickable ${isMetricsPanelOpen ? 'active' : ''}`}
-                  onClick={() => setIsMetricsPanelOpen(!isMetricsPanelOpen)}
-                >
-                  ROC-AUC {modelStats.test_roc_auc}
-                </span>
-                <span 
-                  className={`stat-chip clickable ${isMetricsPanelOpen ? 'active' : ''}`}
-                  onClick={() => setIsMetricsPanelOpen(!isMetricsPanelOpen)}
-                >
-                  Threshold {modelStats.threshold}
-                </span>
-              </>
+              </div>
             ) : (
               <span className="stat-chip muted">Loading model info...</span>
             )}
@@ -169,7 +193,7 @@ export default function App() {
       
       {!apiWarm && (
         <div className="cold-start-banner">
-          ⏳ Server is waking up — first prediction may take 30–60 seconds on free tier.
+          ⏳ Server waking up...
         </div>
       )}
 
@@ -184,6 +208,7 @@ export default function App() {
                  formData={formData} 
                  simulatedResult={simulatedResult} 
                  onSimulate={onSimulate} 
+                 testRocAuc={modelStats?.test_roc_auc}
                />
             </div>
           </div>

@@ -1,218 +1,138 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ClipboardList, Award, ShieldCheck, Headset, Wifi, DollarSign, CreditCard, Activity } from 'lucide-react'
+import { AlertTriangle, CheckCircle, Activity, Download, Shield, Zap, Heart, MessageSquare, Plus, Minus, Loader2 } from 'lucide-react'
+import { toast } from 'react-hot-toast'
 import './ResultCard.css'
 
 const actionMap = {
-  'Contract': {
-    title: 'Offer a long-term contract',
-    action: 'Customers on month-to-month plans churn 3x more. Offer a discount for switching to annual.',
-    icon: ClipboardList
-  },
-  'tenure': {
-    title: 'Loyalty reward program',
-    action: 'Low-tenure customers are high risk. A 1-month free credit at month 3 reduces churn by ~18%.',
-    icon: Award
-  },
-  'OnlineSecurity': {
-    title: 'Bundle online security',
-    action: 'Customers without security add-ons churn more. Offer a free 30-day trial.',
-    icon: ShieldCheck
-  },
-  'TechSupport': {
-    title: 'Proactive support outreach',
-    action: 'No tech support is a strong churn signal. Trigger a support check-in call.',
-    icon: Headset
-  },
-  'InternetService': {
-    title: 'Address fiber service quality',
-    action: 'Fiber optic users churn more despite paying more. Issue a satisfaction survey.',
-    icon: Wifi
-  },
-  'MonthlyCharges': {
-    title: 'Pricing Optimization',
-    action: 'High monthly charges flag cost sensitivity. Check if a tailored down-sell package rescues the account.',
-    icon: DollarSign
-  },
-  'PaymentMethod': {
-    title: 'Incentivize Auto-Pay',
-    action: 'Manual check users churn 2x more frequently. Offer a $5/mo discount to switch to auto-pay.',
-    icon: CreditCard
-  }
+  'Contract': { icon: Shield, title: 'Contract Lock-in', action: 'Offer a 10% discount for moving from Monthly to a 1y or 2y contract.' },
+  'OnlineSecurity': { icon: Shield, title: 'Security Upsell', action: 'Bundle Online Security + Backup for a flat $5 add-on fee.' },
+  'TechSupport': { icon: Zap, title: 'Priority Support', action: 'Offer 3 months of free Priority Tech Support to resolve experience friction.' },
+  'MonthlyCharges': { icon: Heart, title: 'Retention Discount', action: 'Apply a one-time 15% loyalty credit to their next bill.' },
+  'tenure': { icon: Activity, title: 'Milestone Reward', action: 'Send a "first anniversary" gift or digital badging to increase affinity.' },
+  'InternetService': { icon: Zap, title: 'Fiber Upgrade', action: 'If on DSL, offer free installation for Fiber to improve service quality.' },
+  'PaymentMethod': { icon: CheckCircle, title: 'Auto-pay Incentive', action: 'Offer $2/mo credit for switching to Credit Card (Auto-pay).' }
 }
 
-// Animated Risk Score Ring Component
+const FEATURE_DOCS = {
+  'Contract': { label: 'Contract Type', explain: (d) => d === 'increases risk' ? 'Month-to-month contracts are the #1 churn driver in our model.' : 'Long-term contracts strongly lock in revenue.' },
+  'OnlineSecurity': { label: 'Security Status', explain: (d) => d === 'increases risk' ? 'Lack of security features makes customers feel unprotected and prone to leave.' : 'Security features increase sticky usage.' },
+  'TechSupport': { label: 'Tech Support', explain: (d) => d === 'increases risk' ? 'Customers without easy technical help are frustrated twice as fast.' : 'Support availability builds long-term trust.' },
+  'MonthlyCharges': { label: 'Bill Amount', explain: (d) => d === 'increases risk' ? 'High monthly bills increase price sensitivity and competitor comparison.' : 'Competitive pricing reduces churn incentive.' },
+  'tenure': { label: 'Account Age', explain: (d) => d === 'increases risk' ? 'Early-stage customers haven\'t formed a habit yet.' : 'Loyal veterans are rarely lost.' },
+  'InternetService': { label: 'Fiber Optic', explain: (d) => d === 'increases risk' ? 'Fiber optic service may have high friction or pricing issues in this cohort.' : 'High-speed internet keeps users engaged.' },
+  'PaymentMethod': { label: 'Electronic Check', explain: (d) => d === 'increases risk' ? 'Manual payments are points of friction; missing one can lead to churn.' : 'Auto-pay ensures consistent billing.' }
+}
+
 const RiskRing = ({ pct, color }) => {
-  const r = 54, circ = 2 * Math.PI * r
-  const [anim, setAnim] = useState(0)
-  
-  useEffect(() => {
-    const t = setTimeout(() => setAnim(pct), 80)
-    return () => clearTimeout(t)
-  }, [pct])
-  
-  const offset = circ - (anim / 100) * circ
-  
+  const r = 45
+  const circ = 2 * Math.PI * r
+  const offset = circ - (pct / 100) * circ
+
   return (
-    <div className="ring-container">
-      <svg width="140" height="140" viewBox="0 0 140 140">
-        <circle cx="70" cy="70" r={r} fill="none"
-          stroke="var(--surface-2)" strokeWidth="10" />
-        <circle cx="70" cy="70" r={r} fill="none"
-          stroke={color} strokeWidth="10"
-          strokeDasharray={circ}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-          transform="rotate(-90 70 70)"
-          style={{ transition: 'stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1)' }} />
-        <text x="70" y="74" textAnchor="middle"
-          fontSize="22" fontWeight="700"
-          fontFamily="var(--font-mono)"
-          fill={color}>{pct}%</text>
-        <text x="70" y="92" textAnchor="middle"
-          fontSize="11" fill="var(--muted)" fontWeight="600" textTransform="uppercase" letterSpacing="0.05em">Risk</text>
+    <div className="risk-ring-container">
+      <svg className="risk-ring-svg" viewBox="0 0 120 120">
+        <circle className="ring-bg" cx="60" cy="60" r={r} />
+        <motion.circle 
+          className="ring-fill" 
+          cx="60" cy="60" r={r}
+          initial={{ strokeDashoffset: circ }}
+          animate={{ strokeDashoffset: offset }}
+          transition={{ duration: 1.2, ease: "easeOut" }}
+          stroke={color}
+          style={{ strokeDasharray: circ }}
+        />
       </svg>
-    </div>
-  )
-}
-
-const SimulatorPanel = ({ result, formData, simulatedResult, onSimulate }) => {
-  const [simForm, setSimForm] = useState(formData ? { ...formData } : null)
-
-  useEffect(() => {
-    if (simForm && JSON.stringify(simForm) !== JSON.stringify(formData)) {
-      const t = setTimeout(() => {
-        onSimulate({ ...formData, ...simForm })
-      }, 400)
-      return () => clearTimeout(t)
-    }
-  }, [simForm, formData, onSimulate])
-
-  if (!result || !result.churn_prediction || !formData) return null
-
-  const simFeatures = result.top_reasons.filter(r => r.direction === 'increases risk')
-  if (simFeatures.length === 0) return null
-
-  // Ensure rings correctly compute
-  const origPct = Math.round(result.churn_probability * 100)
-  const simPct = simulatedResult ? Math.round(simulatedResult.churn_probability * 100) : null
-  const diff = simPct !== null ? simPct - origPct : null
-
-  // Render logic bounds
-  const getRingColor = (pct) => {
-    if (pct === null) return 'var(--muted)'
-    if (pct >= 50) return 'var(--danger)'
-    if (pct >= 37) return 'var(--warning)'
-    return 'var(--success)'
-  }
-
-  const handleChange = (e, key, parser) => {
-    const val = parser ? parser(e.target.value) : e.target.value
-    setSimForm(prev => ({ ...prev, [key]: val }))
-  }
-
-  return (
-    <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '2px solid var(--border)' }}>
-      <h4 style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '1rem', fontWeight: 800 }}>
-        Intervention Simulator
-      </h4>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1rem', background: 'var(--surface-2)', border: '2px solid var(--border)' }}>
-        
-        {/* Controls Block */}
-        {simFeatures.map(f => {
-          if (f.feature === 'tenure') {
-            return (
-              <div key="tenure" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 700 }}>
-                  <label>Tenure</label>
-                  <span>{simForm.tenure} months</span>
-                </div>
-                <input 
-                  type="range" min="0" max="72" step="1" 
-                  value={simForm.tenure} 
-                  onChange={e => handleChange(e, 'tenure', parseInt)}
-                  className="sim-slider" 
-                />
-              </div>
-            )
-          }
-          if (f.feature === 'MonthlyCharges') {
-            return (
-              <div key="monthly" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 700 }}>
-                  <label>Monthly Charges</label>
-                  <span>${simForm.MonthlyCharges}</span>
-                </div>
-                <input 
-                  type="range" min="18" max="120" step="0.5" 
-                  value={simForm.MonthlyCharges} 
-                  onChange={e => handleChange(e, 'MonthlyCharges', parseFloat)}
-                  className="sim-slider" 
-                />
-              </div>
-            )
-          }
-          if (f.feature === 'Contract') {
-            return (
-              <div key="contract" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <label style={{ fontSize: '12px', fontWeight: 700 }}>Contract Type</label>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  {['Month-to-month', 'One year', 'Two year'].map(c => (
-                    <button 
-                      key={c}
-                      className={`pill-btn ${simForm.Contract === c ? 'active' : ''}`}
-                      onClick={() => setSimForm(prev => ({...prev, Contract: c}))}
-                      style={{ padding: '0.3rem 0.5rem', fontSize: '11px', flex: 1 }}
-                    >
-                      {c.split('-')[0]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )
-          }
-          return null
-        })}
-
-        {/* Results Graph Block */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2rem', marginTop: '1rem' }}>
-           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-             <RiskRing pct={origPct} color={getRingColor(origPct)} />
-             <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--muted)', letterSpacing: '0.05em' }}>CURRENT</span>
-           </div>
-           
-           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }} className={simPct === null && JSON.stringify(simForm) !== JSON.stringify(formData) ? 'sim-pulsing' : ''}>
-             <RiskRing pct={simPct || origPct} color={simPct ? getRingColor(simPct) : 'var(--border)'} />
-             <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text)', letterSpacing: '0.05em' }}>SIMULATED</span>
-           </div>
-        </div>
-        
-        {diff !== null && diff !== 0 && (
-          <div style={{ 
-            background: diff < 0 ? 'var(--success)' : 'var(--danger)',
-            color: diff < 0 ? '#000' : '#fff',
-            border: '2px solid var(--border)',
-            padding: '0.5rem',
-            textAlign: 'center',
-            fontSize: '12px',
-            fontWeight: 800,
-            textTransform: 'uppercase',
-            fontFamily: 'var(--font-mono)'
-          }}>
-            {diff < 0 ? `▼ ${Math.abs(diff)} pts safer` : `▲ ${Math.abs(diff)} pts riskier`}
-          </div>
-        )}
+      <div className="risk-ring-text">
+        <span className="risk-pct">{pct}%</span>
+        <span className="risk-label">Churn Prob</span>
       </div>
     </div>
   )
 }
 
-export default function ResultCard({ result, loading, formData, simulatedResult, onSimulate }) {
+function SimulatorPanel({ result, formData, simulatedResult, onSimulate }) {
+  if (result.risk_level === 'Low' && !simulatedResult) return null
+
+  const features = ['Contract', 'OnlineSecurity', 'TechSupport']
+  const options = {
+    'Contract': ['Month-to-month', 'One year', 'Two year'],
+    'OnlineSecurity': ['Yes', 'No', 'No internet service'],
+    'TechSupport': ['Yes', 'No', 'No internet service']
+  }
+
+  const handleChange = (feat, val) => {
+    onSimulate({ ...formData, [feat]: val })
+  }
+
+  return (
+    <div className="simulator-card">
+      <div className="sim-header">
+        <Activity size={14} />
+        <span>Scenario Simulator</span>
+      </div>
+      <div className="sim-grid">
+        {features.map(f => (
+          <div key={f} className="sim-row">
+            <label>{f}</label>
+            <select 
+              value={simulatedResult ? simulatedResult.inputSnapshot?.[f] || formData[f] : formData[f]} 
+              onChange={(e) => handleChange(f, e.target.value)}
+            >
+              {options[f].map(o => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </div>
+        ))}
+      </div>
+      
+      {simulatedResult && (
+        <motion.div 
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="sim-result"
+        >
+          <div className="sim-compare">
+            <div className="sim-stat">
+              <span className="sim-label">Original</span>
+              <span className="sim-val">{Math.round(result.churn_probability * 100)}%</span>
+            </div>
+            <div className="sim-arrow">→</div>
+            <div className="sim-stat">
+              <span className="sim-label">Simulated</span>
+              <span className="sim-val highlight" style={{ color: simulatedResult.churn_probability > result.churn_probability ? 'var(--danger)' : 'var(--success)' }}>
+                {Math.round(simulatedResult.churn_probability * 100)}%
+              </span>
+            </div>
+          </div>
+          <p className="sim-hint">
+            {simulatedResult.churn_probability < result.churn_probability 
+              ? "✓ Change reduces risk significantly." 
+              : "⚠ This change might increase risk."}
+          </p>
+        </motion.div>
+      )}
+    </div>
+  )
+}
+
+export default function ResultCard({ result, loading, formData, simulatedResult, onSimulate, testRocAuc }) {
 
   const [barsMounted, setBarsMounted] = useState(false)
   const [strategy, setStrategy] = useState(null)
   const [strategyLoading, setStrategyLoading] = useState(false)
   const [cooldown, setCooldown] = useState(0)
+  const [hoveredReason, setHoveredReason] = useState(null)
+  const resultRef = useRef(null)
+
+  useEffect(() => {
+    if (result && !loading) {
+      resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      setBarsMounted(true)
+    } else {
+      setBarsMounted(false)
+      setStrategy(null)
+    }
+  }, [result, loading])
 
   // Cooldown timer
   useEffect(() => {
@@ -260,31 +180,168 @@ export default function ResultCard({ result, loading, formData, simulatedResult,
     setTimeout(() => btn.innerText = orig, 2000)
   }
 
-  // Trigger SHAP bars after short mount delay
-  useEffect(() => {
-    setBarsMounted(false)
-    if (result) {
-      const t = setTimeout(() => setBarsMounted(true), 50)
-      return () => clearTimeout(t)
+  const handleCopy = () => {
+    const pct = Math.round(result.churn_probability * 100)
+    const reasonsStr = result.top_reasons.slice(0, 3).map((r, i) => 
+      `${i+1}. ${r.feature} (${r.effect > 0 ? '+' : ''}${r.effect})`
+    ).join('\n')
+
+    const text = `
+RETAINIQ CHURN ANALYSIS REPORT
+------------------------------
+Timestamp: ${new Date().toLocaleString()}
+Probability: ${pct}%
+Risk Level: ${result.risk_level}
+Verdict: ${result.churn_prediction ? 'PREDICTED TO CHURN' : 'PREDICTED TO STAY'}
+
+TOP 3 RISK FACTORS:
+${reasonsStr}
+
+Model Environment: ${result.model_used}
+    `.trim()
+
+    navigator.clipboard.writeText(text)
+      .then(() => toast.success('Report copied to clipboard!'))
+  }
+
+  const handleExportPDF = async () => {
+    if (!window.jspdf) {
+      const script = document.createElement('script')
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
+      document.head.appendChild(script)
+      await new Promise(resolve => script.onload = resolve)
     }
-  }, [result])
+
+    const { jsPDF } = window.jspdf
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' })
+    const pct = Math.round(result.churn_probability * 100)
+    const now = new Date().toLocaleString()
+
+    const BLACK = [0, 0, 0]
+    const GRAY = [80, 80, 80]
+    const LIGHT = [240, 240, 240]
+    const DANGER = [220, 50, 50]
+    const SUCCESS = [30, 180, 60]
+    const WARNING = [220, 150, 0]
+    const riskColor = result.risk_level === 'High' ? DANGER : result.risk_level === 'Medium' ? WARNING : SUCCESS
+
+    doc.setFillColor(...BLACK)
+    doc.rect(0, 0, 210, 18, 'F')
+    doc.setTextColor(255, 255, 255)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(14)
+    doc.text('RETAINIQ', 14, 12)
+    doc.setFontSize(9)
+    doc.setFont('helvetica', 'normal')
+    doc.text('Customer Churn Analysis Report', 80, 12)
+    doc.text(now, 160, 12)
+
+    doc.setTextColor(...BLACK)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(11)
+    doc.text('CHURN RISK ASSESSMENT', 14, 30)
+    
+    doc.setFillColor(...riskColor)
+    doc.rect(14, 34, 50, 20, 'F')
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(20)
+    doc.setFont('helvetica', 'bold')
+    doc.text(pct + '%', 39, 47, { align: 'center' })
+    
+    doc.setTextColor(...riskColor)
+    doc.setFontSize(14)
+    doc.text(result.risk_level.toUpperCase() + ' RISK', 72, 43)
+    doc.setTextColor(...GRAY)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(9)
+    doc.text('Verdict: ' + (result.churn_prediction ? 'Customer predicted to CHURN' : 'Customer predicted to STAY'), 72, 50)
+    doc.text('Model: ' + result.model_used + ' · Threshold: ' + result.threshold_used, 72, 56)
+
+    doc.setTextColor(...BLACK)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(11)
+    doc.text('TOP RISK DRIVERS (SHAP)', 14, 70)
+    
+    const maxEff = Math.max(...result.top_reasons.map(r => Math.abs(r.effect)))
+    result.top_reasons.forEach((r, i) => {
+      const y = 78 + i * 14
+      const isRisk = r.direction === 'increases risk'
+      const barW = (Math.abs(r.effect) / (maxEff || 1)) * 80
+      
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(9)
+      doc.setTextColor(...GRAY)
+      doc.text('#' + (i+1), 14, y + 5)
+      doc.setTextColor(...BLACK)
+      doc.text(r.feature, 24, y + 5)
+      
+      doc.setFillColor(...LIGHT)
+      doc.rect(110, y, 80, 6, 'F')
+      doc.setFillColor(...(isRisk ? DANGER : SUCCESS))
+      doc.rect(110, y, barW, 6, 'F')
+      
+      doc.setTextColor(...(isRisk ? DANGER : SUCCESS))
+      doc.setFont('helvetica', 'normal')
+      doc.text((r.effect > 0 ? '+' : '') + r.effect.toFixed(4), 196, y + 5, { align: 'right' })
+    })
+
+    const actions = result.top_reasons.filter(r => r.direction === 'increases risk' && actionMap[r.feature])
+    if (actions.length > 0) {
+      const startY = 78 + result.top_reasons.length * 14 + 10
+      doc.setTextColor(...BLACK)
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(11)
+      doc.text('RECOMMENDED ACTIONS', 14, startY)
+      
+      actions.slice(0, 3).forEach((r, i) => {
+        const y = startY + 10 + i * 20
+        const am = actionMap[r.feature]
+        doc.setFillColor(...LIGHT)
+        doc.rect(14, y, 182, 16, 'F')
+        doc.setTextColor(...BLACK)
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(9)
+        doc.text(am.title, 18, y + 6)
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(...GRAY)
+        doc.setFontSize(8)
+        const lines = doc.splitTextToSize(am.action, 174)
+        doc.text(lines[0], 18, y + 12)
+      })
+    }
+
+    doc.setFillColor(...BLACK)
+    doc.rect(0, 285, 210, 12, 'F')
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(8)
+    doc.setFont('helvetica', 'normal')
+    doc.text('Generated by RetainIQ · ML-powered churn prediction · Model accuracy: ROC-AUC ' + (testRocAuc || '0.94'), 105, 292, { align: 'center' })
+
+    doc.save('retainiq_churn_report_' + Date.now() + '.pdf')
+  }
+
+  if (loading) {
+    return (
+      <div className="result-card skeleton">
+        <div className="skeleton-ring-outer">
+          <div className="skeleton-ring-inner"></div>
+        </div>
+        <div className="skeleton-content">
+          <div className="skeleton-line" style={{ width: '60%', height: '24px' }}></div>
+          <div className="skeleton-line" style={{ width: '40%', height: '14px', marginTop: '0.5rem' }}></div>
+          <div className="skeleton-bars" style={{ marginTop: '2rem' }}>
+            {[1,2,3,4,5].map(i => <div key={i} className="skeleton-bar-row" i={i}></div>)}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   const mountAnimationVariants = {
     hidden: { opacity: 0, y: 12 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } }
   }
 
-  if (loading) return (
-    <div className="result-card center">
-      <div className="skeleton-bars">
-        <div className="skeleton-bar" style={{ width: '40%', height: '140px', margin: '0 auto', borderRadius: '50%' }}></div>
-        <div className="skeleton-bar" style={{ width: '80%' }}></div>
-        <div className="skeleton-bar" style={{ width: '60%' }}></div>
-      </div>
-    </div>
-  )
-
-  // Empty State with Lucide Icon mapping
   if (!result) return (
     <motion.div variants={mountAnimationVariants} initial="hidden" animate="visible" className="result-card center">
        <Activity size={56} style={{ color: 'var(--surface-2)', marginBottom: '1rem' }} />
@@ -296,41 +353,15 @@ export default function ResultCard({ result, loading, formData, simulatedResult,
   )
 
   const { churn_probability, churn_prediction, risk_level, model_used, top_reasons } = result
-
-  const handleCopy = () => {
-    const pct = Math.round(churn_probability * 100)
-    const text = `Churn Prediction Result
-Risk: ${risk_level}
-Probability: ${pct}%
-Verdict: ${churn_prediction ? 'Will Churn' : 'Will Stay'}
-Top Reason: ${top_reasons[0]?.feature} (${top_reasons[0]?.direction})
-Model: ${model_used}`
-    navigator.clipboard.writeText(text)
-      .then(() => alert('Result copied to clipboard!'))
-  }
-
-  const handlePrint = () => window.print()
-
-  // Mapping RetainIQ SVG colors
-  const ringColor = {
-    High: 'var(--danger)',   /* #EF4444 */
-    Medium: 'var(--warning)', /* #F59E0B */
-    Low: 'var(--success)'    /* #22C55E */
-  }[risk_level]
-
+  const ringColor = { High: 'var(--danger)', Medium: 'var(--warning)', Low: 'var(--success)' }[risk_level]
   const pct = Math.round(churn_probability * 100)
-  
-  // Calculate max absolute effect for bar widths
   const maxEffect = Math.max(...top_reasons.map(r => Math.abs(r.effect))) || 1
-
-  // Extract Top actionable drivers
-  const actionsToTake = top_reasons
-    .filter(r => r.direction === 'increases risk' && actionMap[r.feature])
-    .slice(0, 2)
+  const actionsToTake = top_reasons.filter(r => r.direction === 'increases risk' && actionMap[r.feature]).slice(0, 2)
 
   return (
-    <AnimatePresence mode="popLayout">
+    <AnimatePresence mode="wait">
       <motion.div 
+        ref={resultRef}
         className="result-card" 
         key={JSON.stringify(result)}
         variants={mountAnimationVariants}
@@ -338,12 +369,11 @@ Model: ${model_used}`
         animate="visible"
       >
         <div className="result-content">
-          
           <RiskRing pct={pct} color={ringColor} />
 
           <div className="result-actions" style={{ marginBottom: '1.5rem', marginTop: '-0.5rem' }}>
             <button className="action-btn" onClick={handleCopy}>Copy Result</button>
-            <button className="action-btn" onClick={handlePrint}>Print / Save PDF</button>
+            <button className="action-btn" onClick={handleExportPDF}>Export PDF Report</button>
           </div>
           
           <SimulatorPanel 
@@ -355,48 +385,49 @@ Model: ${model_used}`
 
           <div>
             <h3 className="reasons-title">Top Risk Drivers (SHAP)</h3>
-            {top_reasons.map((r, i) => {
-              const barWidthTarget = `${(Math.abs(r.effect) / maxEffect) * 100}%`
-              const barWidth = barsMounted ? barWidthTarget : '0%'
-              const isRiskInc = r.direction === 'increases risk'
-              
-              return (
-                <div key={i} className="reason-row">
-                  <span className="reason-rank">#{i + 1}</span>
-                  <span className="reason-feature">{r.feature}</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'flex-end' }}>
-                    <div className="reason-bar-track">
-                      <div className="reason-bar-fill" style={{ 
-                        width: barWidth, 
-                        background: isRiskInc ? 'var(--danger)' : 'var(--success)' 
-                      }}></div>
-                    </div>
-                    <span className="reason-effect" style={{ color: isRiskInc ? 'var(--danger)' : 'var(--success)' }}>
-                      {r.effect > 0 ? '+' : ''}{r.effect}
-                    </span>
+            {top_reasons.map((r, i) => (
+              <div 
+                key={i} 
+                className="reason-row"
+                onMouseEnter={() => setHoveredReason(i)}
+                onMouseLeave={() => setHoveredReason(null)}
+              >
+                <span className="reason-rank">#{i + 1}</span>
+                <span className="reason-feature">{r.feature}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                  <div className="reason-bar-track">
+                    <div className="reason-bar-fill" style={{ 
+                      width: barsMounted ? `${(Math.abs(r.effect) / maxEffect) * 100}%` : '0%', 
+                      background: r.direction === 'increases risk' ? 'var(--danger)' : 'var(--success)' 
+                    }}></div>
                   </div>
+                  <span className="reason-effect" style={{ color: r.direction === 'increases risk' ? 'var(--danger)' : 'var(--success)' }}>
+                    {r.effect > 0 ? '+' : ''}{r.effect}
+                  </span>
                 </div>
-              )
-            })}
+
+                {hoveredReason === i && FEATURE_DOCS[r.feature] && (
+                  <div className="shap-tooltip">
+                    <div className="shap-tooltip-label">{FEATURE_DOCS[r.feature].label}</div>
+                    <div className="shap-tooltip-body">{FEATURE_DOCS[r.feature].explain(r.direction)}</div>
+                    <div className="shap-tooltip-effect" style={{ color: r.direction === 'increases risk' ? 'var(--danger)' : 'var(--success)' }}>
+                      SHAP effect: {r.effect > 0 ? '+' : ''}{r.effect}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
 
-          {/* Retention Action Recommendations with Lucide Integration */}
           {churn_prediction && actionsToTake.length > 0 && (
-            <motion.div 
-              className="action-section"
-              initial={{opacity: 0, y: 10}}
-              animate={{opacity: 1, y: 0}}
-              transition={{delay: 0.25, duration: 0.3}}
-            >
+            <div className="action-section">
               <h3 className="reasons-title" style={{ marginTop: '0.5rem' }}>Suggested Actions</h3>
               <div className="action-cards">
                 {actionsToTake.map((r, i) => {
                   const AcIcon = actionMap[r.feature].icon
                   return (
                     <div key={i} className="action-card">
-                      <span className="action-icon">
-                        <AcIcon size={18} />
-                      </span>
+                      <span className="action-icon"><AcIcon size={18} /></span>
                       <div className="action-content">
                         <span className="action-title">{actionMap[r.feature].title}</span>
                         <span className="action-desc">{actionMap[r.feature].action}</span>
@@ -405,7 +436,7 @@ Model: ${model_used}`
                   )
                 })}
               </div>
-            </motion.div>
+            </div>
           )}
 
           {churn_prediction && (
@@ -416,7 +447,7 @@ Model: ${model_used}`
                   disabled={strategyLoading || cooldown > 0}
                   onClick={handleGenerateStrategy}
                 >
-                  {strategyLoading ? "Generating..." : cooldown > 0 ? `Available in ${cooldown}s` : "✦ Generate Retention Strategy"}
+                  {strategyLoading ? <Loader2 className="animate-spin" size={16} /> : cooldown > 0 ? `Available in ${cooldown}s` : "✦ Generate Retention Strategy"}
                 </button>
               ) : (
                 <div className="strategy-box">
@@ -432,19 +463,14 @@ Model: ${model_used}`
                     })}
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-                    <button id="copy-strat-btn" className="action-btn-sm" onClick={handleCopyStrategy}>
-                      Copy Strategy
-                    </button>
+                    <button id="copy-strat-btn" className="action-btn-sm" onClick={handleCopyStrategy}>Copy Strategy</button>
                   </div>
                 </div>
               )}
             </div>
           )}
-
         </div>
-        <div className="result-footer">
-          {model_used} Engine
-        </div>
+        <div className="result-footer">{model_used} Engine</div>
       </motion.div>
     </AnimatePresence>
   )
