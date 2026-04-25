@@ -1,24 +1,24 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
 :root {
-  --bg: #0F172A;          /* page background */
-  --surface: #1E293B;     /* card background */
-  --surface-2: #334155;   /* hover / input bg */
-  --border: rgba(255,255,255,0.08);
-  --border-2: rgba(255,255,255,0.15);
-  --text: #F1F5F9;
-  --muted: #94A3B8;
-  --accent: #6366F1;      /* indigo — primary CTA */
-  --accent-hover: #818CF8;
-  --success: #22C55E;
-  --warning: #F59E0B;
-  --danger: #EF4444;
-  --success-bg: rgba(34,197,94,0.1);
-  --warning-bg: rgba(245,158,11,0.1);
-  --danger-bg: rgba(239,68,68,0.1);
+  --bg: #ffe17c;          /* High-energy neo-brutalist yellow */
+  --surface: #ffffff;     /* White card background */
+  --surface-2: #f4f4f5;   /* Light gray hover */
+  --border: #000000;      /* Strict black borders */
+  --border-2: #272727;
+  --text: #000000;
+  --muted: #555555;
+  --accent: #b7c6c2;      /* Sage */
+  --accent-hover: #98afa8;
+  --success: #28c840;     /* Strong green */
+  --warning: #ffbc2e;     /* Yellow badge */
+  --danger: #ff5f57;      /* Strong red */
+  --success-bg: rgba(40,200,64,0.1);
+  --warning-bg: rgba(255,188,46,0.1);
+  --danger-bg: rgba(255,95,87,0.1);
+  --font-body: 'Satoshi', sans-serif;
+  --font-heading: 'Cabinet Grotesk', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
-  --radius: 10px;
-  --radius-lg: 14px;
+  --radius: 0px;       /* Brutalism */
+  --radius-lg: 0px;    /* No rounding */
 }
 
 *, *::before, *::after { 
@@ -28,16 +28,30 @@
 }
 
 body {
-  background: var(--bg);
+  background-color: var(--bg);
+  background-image: radial-gradient(circle, #000000 2px, transparent 2px);
+  background-size: 32px 32px;
+  background-position: 0 0;
+  color: var(--text);
   font-family: var(--font-body);
   font-size: 14px;
   line-height: 1.6;
   min-height: 100vh;
 }
 
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 3px; }
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em;
+}
+
+/* Force bolder icons globally for Brutalism */
+.lucide {
+  stroke-width: 3px;
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--bg); border-left: 2px solid var(--border); }
+::-webkit-scrollbar-thumb { background: #000; border: 2px solid var(--bg); }
 
 input, select, button {
   font-family: inherit;

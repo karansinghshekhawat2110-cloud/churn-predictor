@@ -7,44 +7,46 @@
 
 .retainiq-header {
   padding: 1.25rem 2.5rem;
-  background: transparent;
-  border-bottom: 1px solid rgba(255,255,255,0.08); /* faint line on dark navy */
+  background: var(--bg);
+  border-bottom: 2px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
 .retainiq-header h1 {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-light); /* White text on navy */
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text);
   letter-spacing: -0.01em;
+  text-transform: uppercase;
 }
 
 .header-tabs {
   display: flex;
-  gap: 0.5rem;
-  background: rgba(255,255,255,0.1); /* Subtle tab track */
-  padding: 0.25rem;
-  border-radius: 8px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  box-shadow: 4px 4px 0px 0px var(--border);
 }
 
 .tab-btn {
-  padding: 0.4rem 1.25rem;
+  padding: 0.6rem 1.25rem;
   font-size: 13px;
-  font-weight: 600;
-  border-radius: 6px;
+  font-weight: 700;
   border: none;
   background: transparent;
-  color: rgba(255,255,255,0.6);
+  color: var(--muted);
   cursor: pointer;
   transition: all 0.2s;
+  border-right: 2px solid var(--border);
+}
+.tab-btn:last-child {
+  border-right: none;
 }
 
 .tab-btn.active {
-  background: var(--surface); /* White */
-  color: var(--text); /* Slate 900 */
-  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  background: var(--text);
+  color: var(--surface);
 }
 
 .main {
@@ -184,10 +186,11 @@
 }
 
 .cold-start-banner {
-  background: rgba(210, 153, 34, 0.1);
-  border-bottom: 1px solid rgba(210, 153, 34, 0.3);
-  color: #d29922;
+  background: var(--accent);
+  border-bottom: 2px solid var(--border);
+  color: var(--text);
   font-size: 12px;
+  font-weight: 700;
   text-align: center;
   padding: 0.5rem 1rem;
 }
@@ -200,10 +203,11 @@
 
 .stat-chip {
   font-family: var(--font-mono);
+  font-weight: 700;
   font-size: 11px;
-  color: var(--muted);
-  background: var(--surface-2, #1a2130);
-  border: 1px solid var(--border);
-  border-radius: 4px;
+  color: var(--text);
+  background: var(--surface);
+  border: 2px solid var(--border);
+  box-shadow: 2px 2px 0px 0px var(--border);
   padding: 0.2rem 0.5rem;
 }
