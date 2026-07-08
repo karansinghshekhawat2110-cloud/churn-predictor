@@ -1,12 +1,6 @@
 """
 api/main.py — FastAPI backend for Customer Churn Prediction
 
-Why FastAPI?
-- Auto-generates /docs (Swagger UI) — great for interviews & demos
-- Pydantic validation = type-safe inputs before any ML runs
-- Async-ready, production-grade, used at Uber/Microsoft/Netflix
-"""
-
 import sys
 import os
 import io
